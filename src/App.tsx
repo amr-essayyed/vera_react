@@ -1,63 +1,64 @@
+import { Outlet } from 'react-router-dom';
 import './App.css'
+import { AppSidebar } from './components/AppSidebar';
+// import HeaderBar from './components/HeaderBar';
+import { SidebarInset, SidebarProvider, SidebarTrigger } from './components/ui/sidebar';
+import { CookieStorage } from './lib/cookie';
+import { SiteHeader } from './components/SiteHeader';
 // import Counter from './components/Counter'
-import {useAllResource, useResourceByProp} from './hooks/useResource'
-import type { Post } from './types/post';
 
 function App() {
-    const {data:todos, error:todosErr, status:todosSt} = useAllResource('todoss');
-    // const {data, error, status} = useAllResource('posts');
-    const {data:post, error, status} = useResourceByProp('posts', 'title', 'dolorem eum magni eos aperiam quia')
+    
+    const defaultOpen  = CookieStorage.getItem("sidebar_state") === "true"; // read directly    
 
-  return (
-    <>
-        <h1>Posts</h1>
-        <div>
-              {status === 'pending' ? (
-                'loading'
-            ) : status === 'error' ? (
-                <span>Error: {error.message}</span> 
-            ) : (
-                <>
-                    <div>
-                        <div className="card">Post id: {post.id}</div>
-                        <div className="card">Post Title: {post.title}</div>
-                        <div className="card"> {post.body}</div>
+    return (
+        // <SidebarProvider defaultOpen={defaultOpen}>
+        // <SideBar />
+        // <main className='w-full p-2 border-1 border-gray-400'>
+        //     <SidebarTrigger />
+        //     <Outlet />
+        // </main>
+        // </SidebarProvider>
+            <SidebarProvider
+                defaultOpen={defaultOpen}
+                style={
+                    {
+                    "--sidebar-width": "calc(var(--spacing) * 72)",
+                    "--header-height": "calc(var(--spacing) * 12)",
+                    } as React.CSSProperties
+                }
+                >
+                <AppSidebar variant="inset" />
+                <SidebarInset>
+                    <SiteHeader />
+                    <div className="flex flex-1 flex-col">
+                    <div className="@container/main flex flex-1 flex-col gap-2">
+                        <Outlet />
                     </div>
-                </>
-            )}
-        </div>
-        {/* <div>
-            {status === 'pending' ? (
-                'loading'
-            ) : status === 'error' ? (
-                <span>Error: {error.message}</span> 
-            ) : (
-                <>
-                    <div>
-                        {data.map((post: Post)=> <div key={post.id} className="card">Post Title: {post.title}</div>)}
                     </div>
-                </>
-            )}
-        </div> */}
-        
-        <h1>Todos</h1>
-        <div>
-            {todosSt === 'pending' ? (
-                'loading'
-            ) : todosSt === 'error' ? (
-                <span>Error: {todosErr.message}</span> 
-            ) : (
-                <>
-                    <div>
-                        {todos.map((todo:any)=> <div key={todo.id} className="card">todo: {todo.title}</div>)}
-                    </div>
-                </>
-            )}
-        </div>
-        {/* <Counter /> */}
-
-    </>
-  )
+                </SidebarInset>
+                </SidebarProvider>
+    )
 }
 
 export default App
+
+    // <SidebarProvider>
+    //     <div className='viewport'>
+
+    //         <div className='sidebar-container'> {/* navbar */}
+    //             <SideBar />
+    //         </div>
+            
+    //         <div className='right-section-container'> {/* pages */}
+    //             <div className='header-bar-container'>
+    //                 <HeaderBar />
+    //             </div>
+    //             <div className='outlet-container'>
+    //                 <SidebarTrigger />
+    //                 <Outlet />
+    //             </div>
+    //         </div>
+
+    //     </div>
+    // </SidebarProvider>

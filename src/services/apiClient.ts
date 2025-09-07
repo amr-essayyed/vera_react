@@ -1,6 +1,15 @@
+/**
+ * This apiClient function is a wrapper around fetch API.
+ * It intercepts HTTP requests and responses.
+ * To provide general configuration (e.g. authentication) for the HTTP requests of App.
+ * And to provide a neat response format (for data or erros) for the services using fetch API.
+ */
+
 import type { ApiResponse } from "../types/apiResponse";
 
-const   BASE_URL = "https://jsonplaceholder.typicode.com/";
+// const   BASE_URL = "https://jsonplaceholder.typicode.com/";
+// const   BASE_URL = "http://154.26.136.133:10025/";
+const   BASE_URL = "http://localhost:3001/api/";
 
 async function apiClient
 (
@@ -9,7 +18,9 @@ async function apiClient
 ) : Promise<ApiResponse>
 {
     const {input, init} = modifyRequest(inputIntercepted, initIntercepted);
-    const response: Response = await fetch(input, init);    
+    const response: Response = await fetch(input, init);
+    // console.log("res: ",response);
+    
     const apiResponse = modifyResponse(response);
     return apiResponse;
 }
@@ -23,8 +34,11 @@ function modifyRequest
 ) 
 {
     const input = `${BASE_URL}${inputIntercepted}`;
-    const init = {...initIntercepted};
-
+    const init = {...initIntercepted, headers:{
+        ...initIntercepted?.headers,
+        "Content-Type": "application/json"
+    }};
+    
     return {input, init};
 }
 
@@ -38,9 +52,10 @@ async function modifyResponse(response: Response){
         parsedBody: null,
         errorMessage: null,
     };
-
+    
     if (response.ok /* && response.bodyUsed */) {
         apiResponse.parsedBody = await response.json();
+        // console.log("body: ",apiResponse.parsedBody);
         
     } else if (!response.ok) {
         //errors:

@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ResourceService } from "../services/resourceService";
+import type { ResourceData } from "../types/resourceData";
 
 function useAllResource(resourceName: string){
     return useQuery({
@@ -15,7 +16,17 @@ function useResourceByProp<T>(resourceName: string, propName: string, propValue:
     })
 }
 
+// function useCreateResource<T>(resourceName: string, resourceInstance: T){
+function useCreateResource(resourceName: string){
+    const queryClient = useQueryClient();
+    return useMutation<any,Error,ResourceData,unknown>({
+        mutationFn: (resourceData)=>ResourceService.create(resourceData.resourceName, resourceData.resourceInstance),
+        onSuccess: (data) => {console.log(data); queryClient.invalidateQueries({queryKey: [resourceName]})},
+    })
+}
+
 export {
     useAllResource,
-    useResourceByProp
+    useResourceByProp,
+    useCreateResource,
 };
