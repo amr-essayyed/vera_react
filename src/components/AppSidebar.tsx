@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-import { LayoutDashboard, UsersRound, Container, FileBox, Signpost, Home, Building2 } from "lucide-react"
+import { LayoutDashboard, UsersRound, Container, FileBox, Signpost, Home, Building2, Box } from "lucide-react"
 
 import {
     Sidebar,
@@ -34,6 +34,11 @@ const data = {
             title: "Master Orders",
             url: "master-orders",
             icon: FileBox,
+        },
+        {
+            title: "Purchase Orders",
+            url: "purchase-orders",
+            icon: Box,
         },
         {
             title: "Customers",
