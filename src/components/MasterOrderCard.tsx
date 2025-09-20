@@ -1,4 +1,4 @@
-import type { MasterOrder } from "@/types/masterOrder";
+import type { tMasterOrder } from "@/types/masterOrder";
 import {
   Card,
   CardAction,
@@ -11,7 +11,7 @@ import {
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
 
-export default function MasterOrderCard({ masterOrder }: { masterOrder: MasterOrder }) {
+export default function MasterOrderCard({ masterOrder }: { masterOrder: tMasterOrder }) {
     return (
         <Card>
             <CardHeader>

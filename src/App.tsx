@@ -5,6 +5,7 @@ import { AppSidebar } from './components/AppSidebar';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from './components/ui/sidebar';
 import { CookieStorage } from './lib/cookie';
 import { SiteHeader } from './components/SiteHeader';
+import { BreadcrumbProvider } from './contexts/BreadcrumbContext';
 // import Counter from './components/Counter'
 
 function App() {
@@ -19,25 +20,27 @@ function App() {
         //     <Outlet />
         // </main>
         // </SidebarProvider>
-            <SidebarProvider
-                defaultOpen={defaultOpen}
-                style={
-                    {
-                    "--sidebar-width": "calc(var(--spacing) * 72)",
-                    "--header-height": "calc(var(--spacing) * 12)",
-                    } as React.CSSProperties
-                }
-                >
-                <AppSidebar variant="inset" />
-                <SidebarInset>
-                    <SiteHeader />
-                    <div className="flex flex-1 flex-col">
-                    <div className="@container/main flex flex-1 flex-col gap-2">
-                        <Outlet />
-                    </div>
-                    </div>
-                </SidebarInset>
+            <BreadcrumbProvider>
+                <SidebarProvider
+                    defaultOpen={defaultOpen}
+                    style={
+                        {
+                        "--sidebar-width": "calc(var(--spacing) * 72)",
+                        "--header-height": "calc(var(--spacing) * 12)",
+                        } as React.CSSProperties
+                    }
+                    >
+                    <AppSidebar variant="inset" />
+                    <SidebarInset>
+                        <SiteHeader />
+                        <div className="flex flex-1 flex-col">
+                        <div className="@container/main flex flex-1 flex-col gap-2">
+                            <Outlet />
+                        </div>
+                        </div>
+                    </SidebarInset>
                 </SidebarProvider>
+            </BreadcrumbProvider>
     )
 }
 

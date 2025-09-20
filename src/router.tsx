@@ -8,6 +8,7 @@ import PurchaseOrderPage from "./pages/PurchaseOrderPage";
 import MasterOrderDetailPage from "./pages/MasterOrderDetailPage";
 import PurchaseOrderDetailPage from "./pages/PurchaseOrderDetailPage";
 import PurchaseOrderCreatePage from "./pages/PurchaseOrderCreatePage";
+import MasterOrderCreatePage from "./pages/MasterOrderCreatePage";
 
 export const router = createBrowserRouter([
     { path: '/', Component: App, children: [
@@ -15,6 +16,7 @@ export const router = createBrowserRouter([
         {path: 'posts', Component: PostsPage},
         {path:'master-orders', Component: MasterOrderPage },
         {path:'master-orders/:id', Component: MasterOrderDetailPage },
+        {path:'master-orders/create', Component: MasterOrderCreatePage },
         {path:'purchase-orders', Component: PurchaseOrderPage },
         {path:'purchase-orders/:id', Component: PurchaseOrderDetailPage },
         {path:'purchase-orders/create', Component: PurchaseOrderCreatePage },

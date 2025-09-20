@@ -1,29 +1,29 @@
 import PageHeader from "@/components/PageHeader";
 import PurchaseOrderCard from "@/components/PurchaseOrderCard";
 import PurchaseOrderList from "@/components/ResourceList";
-import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
 export default function PurchaseOrderPage() {
     return (
-        <div className="w-full p-6 mx-auto">
+        <div className="min-h-screen bg-gray-50 dark:bg-black">
             <PageHeader
                 title="Purchase Orders"
                 description="Manage your orders and track their progress"
-                // actionButton={{
-                //     label: "+ New Order",
-                //     dialogContent: <></>,
-                // }}
+                actionButton={{
+                    label: "+ New Order",
+                    link: <Link to={`create`}>Create Purchase Order</Link>,
+                }}
             />
 
-            <Button asChild>
-                <Link to={`create`}>create a purchase order</Link>
-            </Button>
-
-            <PurchaseOrderList 
-                ResourceCard={PurchaseOrderCard}
-                resourceName="purchaseOrder"
-            />
+            
+            <div className="max-w-6xl mx-auto px-4 py-6">
+                <div>
+                    <PurchaseOrderList 
+                        ResourceCard={PurchaseOrderCard}
+                        resourceName="purchaseOrder"
+                    />
+                </div>
+            </div>
         </div>
     )
 }

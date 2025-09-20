@@ -44,7 +44,7 @@ export const purchaseOrderLineSchema = z.object({
     .enum(["line_section", "line_note"])
     .optional(), // Odoo display-only lines
   analytic_account_id: many2oneSchema.optional(),
-});
+}).catchall(z.any()); // Allow additional custom fields
 
 /** Top-level purchase.order schema */
 export const purchaseOrderSchema = z.object({
@@ -76,6 +76,27 @@ export const purchaseOrderSchema = z.object({
   notes: z.string().optional(),          // terms/notes
 });
 
+/** Custom column definition for form UI */
+// export const customColumnSchema = z.object({
+//   id: z.string(),
+//   name: z.string(),
+//   type: z.enum(["text", "number", "date"]),
+// });
+
+/** Extended purchase order line for form with image support */
+export const purchaseOrderLineFormSchema = purchaseOrderLineSchema.extend({
+  image: z.instanceof(File).optional(), // For form file upload
+}); // .catchall(z.any()); // Allow custom fields as direct properties
+
+/** Form schema for purchase order creation */
+export const purchaseOrderFormSchema = z.object({
+  order_line: z.array(purchaseOrderLineFormSchema).min(1, "At least one line is required"),
+  // customColumns: z.array(customColumnSchema).default([]),
+});
+
 /** Handy TS types */
 export type PurchaseOrder = z.infer<typeof purchaseOrderSchema>;
 export type PurchaseOrderLine = z.infer<typeof purchaseOrderLineSchema>;
+// export type CustomColumn = z.infer<typeof customColumnSchema>;
+export type PurchaseOrderLineForm = z.infer<typeof purchaseOrderLineFormSchema>;
+export type PurchaseOrderForm = z.infer<typeof purchaseOrderFormSchema>;
