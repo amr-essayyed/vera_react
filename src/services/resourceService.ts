@@ -158,13 +158,14 @@ class JsonRpcResourceService {
             },
             "id": 1
         };
+        
         resourceName = 'jsonrpc';
         const response: ApiResponse  = await apiClient(resourceName, {method:"POST", body:JSON.stringify(body)});
         if(! response.ok) {
             throw new Error(response.errorMessage as string)
         }else {
             if(response.parsedBody.error){
-                
+                console.error("JSON-RPC Error:", response.parsedBody.error);
                 throw new Error(response.parsedBody.error.data.message as string)
             }
             return response.parsedBody.result;

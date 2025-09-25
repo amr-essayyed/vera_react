@@ -90,6 +90,10 @@ export const purchaseOrderLineFormSchema = purchaseOrderLineSchema.extend({
 
 /** Form schema for purchase order creation */
 export const purchaseOrderFormSchema = z.object({
+  partner_id: z.string().min(1, "Supplier is required"),
+  partner_ref: z.string().optional(),
+  date_order: z.string().optional(),
+  notes: z.string().optional(),
   order_line: z.array(purchaseOrderLineFormSchema).min(1, "At least one line is required"),
   // customColumns: z.array(customColumnSchema).default([]),
 });

@@ -20,8 +20,8 @@ import { NavUser } from './nav-user'
 
 const data = {
     user: {
-        name: "shadcn",
-        email: "m@example.com",
+        name: "VeraUser",
+        email: "m@vera.com",
         avatar: "/avatars/shadcn.jpg",
     },
     navMain:[
@@ -44,6 +44,11 @@ const data = {
             title: "Customers",
             url: "customers",
             icon: UsersRound,
+        },
+        {
+            title: "products",
+            url: "products",
+            icon: Box
         },
         {
             title: "Suppliers",

@@ -18,8 +18,8 @@ async function apiClient
 ) : Promise<ApiResponse>
 {
     const {input, init} = modifyRequest(inputIntercepted, initIntercepted);
+    
     const response: Response = await fetch(input, init);
-    // console.log("res: ",response);
     
     const apiResponse = modifyResponse(response);
     return apiResponse;
@@ -55,7 +55,7 @@ async function modifyResponse(response: Response){
     
     if (response.ok /* && response.bodyUsed */) {
         apiResponse.parsedBody = await response.json();
-        // console.log("body: ",apiResponse.parsedBody);
+        // console.log("Response body:", apiResponse.parsedBody);
         
     } else if (!response.ok) {
         //errors:

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
 
-export default function ItemsTable({ form }: { form: UseFormReturn<any> }) {
+export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<any>; isLoading?: boolean }) {
 	const [selectedCell, setSelectedCell] = useState<{
 		row: number;
 		col: number;
@@ -354,7 +354,9 @@ export default function ItemsTable({ form }: { form: UseFormReturn<any> }) {
 				{/* <Button type="button" variant="outline" onClick={addCustomColumn}>
               Add Column
             </Button> */}
-				<Button type="submit">Submit</Button>
+				<Button type="submit" disabled={isLoading}>
+					{isLoading ? "Loading data..." : "Submit"}
+				</Button>
 			</div>
 
 			{/* {customColumnFields.length > 0 && (

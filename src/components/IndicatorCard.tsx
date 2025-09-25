@@ -1,5 +1,6 @@
-import { type LucideIcon } from "lucide-react";
+import { type IconNode, type LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader } from "./ui/card";
+import type { Icon } from "@tabler/icons-react";
 
 type tProps = {
 	icon: LucideIcon;

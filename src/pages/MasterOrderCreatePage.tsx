@@ -13,10 +13,11 @@ export default function MasterOrderCreatePage() {
 	const { mutateAsync: mutatemasterOrder } = useCreateResource("masterOrder");
 	const { mutateAsync: mutatemasterOrderLine } = useCreateMultipleResources("masterOrderLine");
 	const { mutateAsync: mutateProduct } = useCreateMultipleResources("product");
-    
+
 	// use query: getAll clients and vendors
-	const { data: clients, isLoading: isClientsLoading } = useAllResource("client");
-	const { data: vendors, isLoading: isVendorsLoading } = useAllResource("vendor");
+	const { data: clients, isLoading: isClientsLoading, error: clientsError } = useAllResource("client");
+	const { data: vendors, isLoading: isVendorsLoading, error: vendorsError } = useAllResource("vendor");
+	const { data: products, isLoading: isProductsLoading, error: productsError } = useAllResource("product");
 
 	const form = useForm<tMasterOrderForm>({
 		resolver: zodResolver(masterOrderFormSchema),
@@ -35,15 +36,35 @@ export default function MasterOrderCreatePage() {
 	// 2. Define a submit handler.
 	async function onSubmit(values: tMasterOrderForm) {
 		console.log("Form submitted with values:", values);
-		try {
-            //! search for a product of line.name
-            // var productToOtder =[];
-            // Process all order lines and convert images to base64
-			const productsToCreate = await Promise.all(
-				values.order_line
-                    // .filter((line)=> clients.find((c)=>c.name === line.name))
-                    .map(async (line) => {
+		console.log("Products data:", products);
+		console.log("Products loading:", isProductsLoading);
 
+		// Check if any data is still loading
+		if (isProductsLoading || isClientsLoading || isVendorsLoading) {
+			console.error("Data is still loading, please wait...");
+			alert("Please wait for all data to load before submitting the form.");
+			return;
+		}
+
+		// Check if required data failed to load
+		if (!products || !clients || !vendors) {
+			console.error("Required data failed to load:", { products: !!products, clients: !!clients, vendors: !!vendors });
+			alert("Some required data failed to load. Please refresh the page and try again.");
+			return;
+		}
+
+		try {
+			//! search for a product of line.name
+			// var productToOtder =[];
+			// Process all order lines and convert images to base64
+
+			const newProducts = values.order_line.filter((product) => !products?.some((p: any) => p.name === product.name));
+			console.log("newProducts:", newProducts);
+
+			const productsToCreate = await Promise.all(
+				// values.order_line
+				// .filter((line)=> clients.find((c)=>c.name === line.name))
+				newProducts.map(async (line) => {
 					const imageBase64 = line.image ? await imageToBase64(line.image) : null;
 
 					// Build the product object
@@ -71,12 +92,6 @@ export default function MasterOrderCreatePage() {
 			const createdProducts = await mutateProduct(productsToCreate);
 			console.log(`Successfully created ${productsToCreate.length} products!`, createdProducts);
 
-			console.log("clientId", values.client_id);
-			console.log("vendorId", values.vendor_id);
-			console.log("workflowType", values.workflow_type);
-			console.log("commissionRate", values.commission_rate);
-			console.log("dateExpected", values.date_expected);
-
 			// Step 2: Create master order first (without order lines)
 			const masterOrderData = {
 				// name: `Master Order ${new Date().toISOString()}`,
@@ -86,6 +101,7 @@ export default function MasterOrderCreatePage() {
 				workflow_type: values.workflow_type,
 				commission_rate: values.commission_rate,
 				date_expected: values.date_expected,
+				line_ids: values.order_line.map((line) => line.id),
 			};
 
 			console.log("Creating master order:", masterOrderData);
@@ -119,9 +135,30 @@ export default function MasterOrderCreatePage() {
 		}
 	}
 
+	// Debug logging (can be removed in production)
+	console.log("Data loading status - Products:", !!products, "Clients:", !!clients, "Vendors:", !!vendors);
+
 	return (
 		<div>
 			<PageHeader title="Master Orders" description="Create Your Order here. You can link or related workflow and processes here." />
+			{productsError && (
+				<div className="max-w-6xl mx-auto px-4 py-2">
+					<div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+						<strong>Error loading products:</strong> {productsError.message}
+					</div>
+				</div>
+			)}
+			{(isProductsLoading || isClientsLoading || isVendorsLoading) && (
+				<div className="max-w-6xl mx-auto px-4 py-2">
+					<div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
+						Loading data...
+						{isProductsLoading && " Products"}
+						{isClientsLoading && " Clients"}
+						{isVendorsLoading && " Vendors"}
+						{" - Please wait before submitting the form."}
+					</div>
+				</div>
+			)}
 			<div className="max-w-6xl mx-auto px-4 py-4">
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -162,7 +199,10 @@ export default function MasterOrderCreatePage() {
 														</SelectContent>
 													</Select>
 												</FormControl>
-												<Button title="Create Client" type="button" onClick={()=>{}}>+</Button> {/* add functionality: open ClientCreateDialog */}
+												<Button title="Create Client" type="button" onClick={() => {}}>
+													+
+												</Button>{" "}
+												{/* add functionality: open ClientCreateDialog */}
 											</div>
 											<FormMessage />
 										</FormItem>
@@ -192,7 +232,10 @@ export default function MasterOrderCreatePage() {
 														</SelectContent>
 													</Select>
 												</FormControl>
-												<Button title="Create Vendor" type="button" onClick={()=>{}}>+</Button> {/* add functionality: open VendorCreateDialog */}
+												<Button title="Create Vendor" type="button" onClick={() => {}}>
+													+
+												</Button>{" "}
+												{/* add functionality: open VendorCreateDialog */}
 											</div>
 											<FormMessage />
 										</FormItem>
@@ -231,16 +274,7 @@ export default function MasterOrderCreatePage() {
 								<FormItem className="w-fit">
 									<FormLabel>Commission Rate (%)</FormLabel>
 									<FormControl>
-										<Input 
-											{...field}
-											type="number"
-											min="0"
-											max="100"
-											step="0.01"
-											placeholder="Enter commission rate"
-											className="w-[200px]"
-											onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-										/>
+										<Input {...field} type="number" min="0" max="100" step="0.01" placeholder="Enter commission rate" className="w-[200px]" onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
 									</FormControl>
 									<FormMessage />
 								</FormItem>
@@ -253,17 +287,13 @@ export default function MasterOrderCreatePage() {
 								<FormItem className="w-fit">
 									<FormLabel>Expected Date</FormLabel>
 									<FormControl>
-										<Input 
-											{...field}
-											type="date"
-											className="w-[200px]"
-										/>
+										<Input {...field} type="date" className="w-[200px]" />
 									</FormControl>
 									<FormMessage />
 								</FormItem>
 							)}
 						/>
-						<ItemsTable form={form} />
+						<ItemsTable form={form} isLoading={isProductsLoading || isClientsLoading || isVendorsLoading} />
 					</form>
 				</Form>
 			</div>
