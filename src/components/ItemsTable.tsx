@@ -9,6 +9,27 @@ import { Button } from "@/components/ui/button";
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
 
 export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<any>; isLoading?: boolean }) {
+	/* 
+		PURCHASE ORDER LINE FIELDS:
+		
+		USER INPUT:
+		- name: Product description/name (required)
+		- product_qty: Quantity to order (default: 1)
+		- price_unit: Unit price (default: 0)
+		- image: Product image file (optional)
+		
+		SYSTEM/AUTO (set by Odoo):
+		- id: Line record ID (auto-generated)
+		- product_id: Link to product.product (created from name if new)
+		- order_id: Link to parent purchase.order
+		- product_uom: Unit of measure (default from product)
+		- date_planned: Delivery date (inherited from order or product)
+		
+		COMPUTED (calculated by Odoo):
+		- price_subtotal: qty * price_unit (before taxes)
+		- price_total: price_subtotal + taxes
+		- taxes_id: Applied taxes (from product or supplier)
+	*/
 	const [selectedCell, setSelectedCell] = useState<{
 		row: number;
 		col: number;
@@ -177,59 +198,12 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 			<Table ref={tableRef} onPaste={handlePaste}>
 				<TableHeader>
 					<TableRow>
-						<TableHead>Image</TableHead>
-						<TableHead>Name</TableHead>
-						<TableHead>Quantity</TableHead>
-						<TableHead>Price</TableHead>
-						{/* {customColumnFields.map((column, columnIndex) => (
-                        <TableHead key={column.id} className="relative group">
-                        <div className="flex items-center gap-2">
-                            <Input
-                            value={column.name}
-                            onChange={(e) =>
-                                updateCustomColumnName(columnIndex, e.target.value)
-                            }
-                            className="h-8 text-sm font-medium"
-                            placeholder="Column name"
-                            />
-                            <select
-                            value={column.type}
-                            onChange={(e) =>
-                                updateCustomColumnType(
-                                columnIndex,
-                                e.target.value as "text" | "number" | "date"
-                                )
-                            }
-                            className="h-8 text-xs border rounded px-2"
-                            >
-                            <option value="text">Text</option>
-                            <option value="number">Number</option>
-                            <option value="date">Date</option>
-                            </select>
-                            <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeCustomColumn(columnIndex)}
-                            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                            ×
-                            </Button>
-                        </div>
-                        </TableHead>
-                        ))} */}
-                        {/* <TableHead>
-                            <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={addCustomColumn}
-                            className="h-8 w-8 p-0"
-                            >
-                            +
-                            </Button>
-                        </TableHead> */}
-						<TableHead></TableHead>
+						<TableHead className="w-32">Image</TableHead>
+						<TableHead className="min-w-48">Product Name</TableHead>
+						<TableHead className="w-24">Qty</TableHead>
+						<TableHead className="w-32">Unit Price</TableHead>
+						<TableHead className="w-32">Subtotal</TableHead>
+						<TableHead className="w-20">Actions</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
@@ -264,7 +238,7 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 									render={({ field }) => (
 										<FormItem>
 											<FormControl>
-												<Input {...field} placeholder="Name" onFocus={() => handleCellClick(index, 1)} />
+												<Input {...field} placeholder="Enter product name" onFocus={() => handleCellClick(index, 1)} />
 											</FormControl>
 											<FormMessage />
 										</FormItem>
@@ -278,7 +252,7 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 									render={({ field }) => (
 										<FormItem>
 											<FormControl>
-												<Input type="number" {...field} onFocus={() => handleCellClick(index, 2)} onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} />
+												<Input type="number" min="1" {...field} onFocus={() => handleCellClick(index, 2)} onChange={(e) => field.onChange(parseInt(e.target.value) || 1)} placeholder="1" />
 											</FormControl>
 											<FormMessage />
 										</FormItem>
@@ -292,53 +266,18 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 									render={({ field }) => (
 										<FormItem>
 											<FormControl>
-												<Input type="number" step="0.01" {...field} onFocus={() => handleCellClick(index, 3)} onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
+												<Input type="number" step="0.01" min="0" {...field} onFocus={() => handleCellClick(index, 3)} onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} placeholder="0.00" />
 											</FormControl>
 											<FormMessage />
 										</FormItem>
 									)}
 								/>
 							</TableCell>
-							{/* {customColumnFields.map((column, colIndex) => {
-                            const actualColIndex = 4 + colIndex; // Start after the 4 fixed columns
-                            const currentValue = (field as any)[column.id] || "";
-                            return (
-                                <TableCell
-                                key={column.id}
-                                onClick={() => handleCellClick(index, actualColIndex)}
-                                className={
-                                    selectedCell?.row === index &&
-                                    selectedCell?.col === actualColIndex
-                                    ? "bg-blue-100"
-                                    : ""
-                                }
-                                >
-                                <Input
-                                    type={
-                                    column.type === "number"
-                                        ? "number"
-                                        : column.type === "date"
-                                        ? "date"
-                                        : "text"
-                                    }
-                                    value={currentValue}
-                                    onChange={(e) => {
-                                    const value =
-                                        column.type === "number"
-                                        ? parseFloat(e.target.value) || 0
-                                        : e.target.value;
-                                    updateCustomCellData(column.id, index, value);
-                                    }}
-                                    onFocus={() => handleCellClick(index, actualColIndex)}
-                                    placeholder={`Enter ${column.name.toLowerCase()}`}
-                                    step={column.type === "number" ? "0.01" : undefined}
-                                />
-                            </TableCell>
-                            );
-                            })} */}
-							<TableCell></TableCell>
+							<TableCell className="text-right font-medium">
+								${((form.watch(`order_line.${index}.product_qty`) || 0) * (form.watch(`order_line.${index}.price_unit`) || 0)).toFixed(2)}
+							</TableCell>
 							<TableCell>
-								<Button type="button" variant="destructive" onClick={() => remove(index)}>
+								<Button type="button" variant="destructive" size="sm" onClick={() => remove(index)}>
 									Delete
 								</Button>
 							</TableCell>
@@ -348,15 +287,30 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 			</Table>
 
 			<div className="flex gap-2 flex-wrap">
-				<Button type="button" onClick={() => append({ name: "", product_qty: 1, price_unit: 0 })}>
-					Add Row
+				<Button type="button" variant="outline" onClick={() => append({ name: "", product_qty: 1, price_unit: 0 })}>
+					Add Item
 				</Button>
-				{/* <Button type="button" variant="outline" onClick={addCustomColumn}>
-              Add Column
-            </Button> */}
-				<Button type="submit" disabled={isLoading}>
-					{isLoading ? "Loading data..." : "Submit"}
-				</Button>
+				{fields.length > 1 && (
+					<Button 
+						type="button" 
+						variant="outline" 
+						onClick={() => {
+							// Remove all empty rows except the last one
+							const emptyIndices = fields
+								.map((field, index) => ({ field, index }))
+								.filter(({ index }) => {
+									const line = form.watch(`order_line.${index}`);
+									return !line?.name && (line?.product_qty || 0) <= 0 && (line?.price_unit || 0) <= 0;
+								})
+								.map(({ index }) => index)
+								.slice(0, -1); // Keep at least one empty row
+							
+							emptyIndices.reverse().forEach(index => remove(index));
+						}}
+					>
+						Clear Empty Rows
+					</Button>
+				)}
 			</div>
 
 			{/* {customColumnFields.length > 0 && (
