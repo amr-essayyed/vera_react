@@ -1,83 +1,88 @@
 import { Link } from 'react-router-dom'
 
-import { LayoutDashboard, UsersRound, Container, FileBox, Signpost, Home, Building2, Box } from "lucide-react"
+import { LayoutDashboard, UsersRound, Container, FileBox, Signpost, Percent, Box } from "lucide-react"
 
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarGroup,
-    SidebarGroupContent,
-    SidebarGroupLabel,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { IconHelp, IconInnerShadowTop, IconSearch, IconSettings } from '@tabler/icons-react'
 import { NavMain } from './NavMain'
 import { NavUser } from './nav-user'
 
 const data = {
-    user: {
-        name: "VeraUser",
-        email: "m@vera.com",
-        avatar: "/avatars/shadcn.jpg",
+  user: {
+    name: "VeraUser",
+    email: "m@vera.com",
+    avatar: "/avatars/shadcn.jpg",
+  },
+  navMain: [
+    {
+      title: "Dashboard",
+      url: "dashboard",
+      icon: LayoutDashboard,
     },
-    navMain:[
-        {
-            title: "Dashboard",
-            url: "dashboard",
-            icon: LayoutDashboard,
-        },
-        {
-            title: "Master Orders",
-            url: "master-orders",
-            icon: FileBox,
-        },
-        {
-            title: "Purchase Orders",
-            url: "purchase-orders",
-            icon: Box,
-        },
-        {
-            title: "Customers",
-            url: "customers",
-            icon: UsersRound,
-        },
-        {
-            title: "products",
-            url: "products",
-            icon: Box
-        },
-        {
-            title: "Suppliers",
-            url: "suppliers",
-            icon: Container,
-        },
-        {
-            title: "posts",
-            url: "posts",
-            icon: Signpost
-        },
-    ],
-    navSecondary: [
-        {
-            title: "Settings",
-            url: "#",
-            icon: IconSettings,
-        },
-        {
-            title: "Get Help",
-            url: "#",
-            icon: IconHelp,
-        },
-        {
-            title: "Search",
-            url: "#",
-            icon: IconSearch,
-        },
-    ],
+    {
+      title: "Master Orders",
+      url: "master-orders",
+      icon: FileBox,
+    },
+    {
+      title: "Purchase Orders",
+      url: "purchase-orders",
+      icon: Box,
+    },
+    {
+      title: "Customers",
+      url: "customers",
+      icon: UsersRound,
+    },
+    {
+      title: "products",
+      url: "products",
+      icon: Box
+    },
+    {
+      title: "Suppliers",
+      url: "suppliers",
+      icon: Container,
+    },
+    {
+      title: "posts",
+      url: "posts",
+      icon: Signpost
+    },
+    {
+      title: "Sales",
+      url: "sales",
+      icon: Percent,
+    },
+  ],
+  navSecondary: [
+    {
+      title: "Settings",
+      url: "#",
+      icon: IconSettings,
+    },
+    {
+      title: "Get Help",
+      url: "#",
+      icon: IconHelp,
+    },
+    {
+      title: "Search",
+      url: "#",
+      icon: IconSearch,
+    },
+  ],
 
 }
 
