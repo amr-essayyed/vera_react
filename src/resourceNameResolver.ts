@@ -1,3 +1,5 @@
+import { purchaseOrderKeys, purchaseOrderLineKeys } from "./types/purchaseOrder";
+
 const resourceNameResolver: { [key: string]: { modelName: string; fields: {} } } = {
 	masterOrder: {
 		modelName: "at.master.order",
@@ -15,7 +17,7 @@ const resourceNameResolver: { [key: string]: { modelName: string; fields: {} } }
 	purchaseOrder: {
 		modelName: "purchase.order",
 		fields: {
-			fields: ["id", "name", "partner_id", "partner_ref", "customer_id", "order_status", "shipping_status", "payment_status", "currency_id", "date_approve", "project_id", "order_line", "date_planned", "date_order", "amount_total", "state", "invoice_status", "user_id"],
+			fields: [...purchaseOrderKeys],
 			// limit: 10,
 			// offset: 0
 		},
@@ -23,7 +25,7 @@ const resourceNameResolver: { [key: string]: { modelName: string; fields: {} } }
 	purchaseOrderLine: {
 		modelName: "purchase.order.line",
 		fields: {
-			fields: ["id", "name", "order_id", "product_id", "product_qty", "price_unit", "price_subtotal", "currency_id"],
+			fields: [...purchaseOrderLineKeys],
 			// limit: 10,
 			// offset: 0
 		},
@@ -70,12 +72,52 @@ const resourceNameResolver: { [key: string]: { modelName: string; fields: {} } }
 			fields: ["id", "name", "avatar_1024", "company_id", "company_name"],
 		},
 	},
-	supplier: {
+	contact: {
 		modelName: "res.partner",
 		fields: {
-			fields: ["id", "name", "email", "phone", "mobile", "website", "street", "street2", "city", "state_id", "zip", "country_id", "vat", "is_company", "supplier_rank", "customer_rank", "category_id", "comment", "avatar_1024"],
+			fields: [
+                "id", 
+                "name", 
+                "email", 
+                "phone", 
+                "mobile",
+                "website",
+                "street",
+                "street2",
+                "city",
+                "state_id",
+                "zip",
+                "country_id",
+                "vat",
+                "is_company",
+                "supplier_rank",
+                "customer_rank",
+                "category_id",
+                "comment",
+                "avatar_1024"
+            ],
 		},
 	},
 };
 
 export default resourceNameResolver;
+
+
+                // "id", 
+                // "name", 
+                // "partner_ref", 
+                // "customer_id", 
+                // "order_status", 
+                // "shipping_status", 
+                // "payment_status", 
+                // "date_approve", 
+                // "project_id", 
+                // "date_planned", 
+                // "date_order",
+                // "partner_id" , // ref res.partner (supplier)
+                // "currency_id", // ref res.currency
+                // "amount_total",
+                // "order_line", // ref purchase.order.line
+                // "invoice_ids", // ref account.move
+                // "invoice_count",
+                // "invoice_status" // select

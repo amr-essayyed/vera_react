@@ -17,7 +17,7 @@ import {
 
 export default function SupplierDetailPage() {
     const { id } = useParams<{ id: string }>();
-    const { data: supplier, isLoading, error } = useResourceById("supplier", id!) as { data: Supplier | undefined, isLoading: boolean, error: any };
+    const { data: supplier, isLoading, error } = useResourceById("contact", id!) as { data: Supplier | undefined, isLoading: boolean, error: any };
 
     if (isLoading) {
         return (

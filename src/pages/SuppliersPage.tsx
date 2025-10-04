@@ -49,7 +49,8 @@ export default function SuppliersPage() {
                 <div>
                     <ResourceTable
                         ResourceRow={SupplierRow}
-                        resourceName="supplier"
+                        resourceName="contact"
+                        condition={[["supplier_rank", ">", 0]]}
                         columns={['Company', 'Contact Info', 'Address', 'Country', 'Website', 'Status']}
                     />
                 </div>

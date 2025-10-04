@@ -5,11 +5,12 @@ import type { WithId } from "@/types/withId";
 type ResourceTableProps = {
 	ResourceRow: React.ComponentType<any>;
 	resourceName: string;
+    condition?: any[];
 	columns: string[];
 };
 
-export default function ResourceTable<T extends WithId>({ ResourceRow, resourceName, columns }: ResourceTableProps) {
-	const { data, isLoading, error } = useAllResource(resourceName);
+export default function ResourceTable<T extends WithId>({ ResourceRow, resourceName, condition, columns }: ResourceTableProps) {
+	const { data, isLoading, error } = useAllResource(resourceName, condition);
 
 	if (isLoading) return <LoadingSubPage />;
 	if (error) return <div className="text-red-500 p-4">Error loading data: {error.message}</div>;

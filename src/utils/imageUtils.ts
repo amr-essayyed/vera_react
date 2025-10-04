@@ -49,3 +49,12 @@ export function checkImageExists(imageUrl: string): Promise<boolean> {
     img.src = imageUrl;
   });
 }
+
+export function imageToBase64(file: File) {
+	return new Promise<string>((resolve, reject) => {
+		const reader = new FileReader();
+		reader.readAsDataURL(file);
+		reader.onload = () => resolve((reader.result as string).split(",")[1]); // strip prefix
+		reader.onerror = reject;
+	});
+}

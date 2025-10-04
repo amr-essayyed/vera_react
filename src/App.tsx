@@ -6,6 +6,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from './components/ui/s
 import { CookieStorage } from './lib/cookie';
 import { SiteHeader } from './components/SiteHeader';
 import { BreadcrumbProvider } from './contexts/BreadcrumbContext';
+import { Toaster } from './components/ui/sonner';
 // import Counter from './components/Counter'
 
 function App() {
@@ -40,6 +41,7 @@ function App() {
                         </div>
                     </SidebarInset>
                 </SidebarProvider>
+                <Toaster />
             </BreadcrumbProvider>
     )
 }
