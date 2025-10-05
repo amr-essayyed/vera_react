@@ -5,14 +5,14 @@
     - [x] partner_id: Supplier selection (must select from existing suppliers)
     
     🟡 OPTIONAL USER INPUT:
-    - [ ] partner_ref: Supplier's reference/PO number
+    - [x] partner_ref: Supplier's reference/PO number
     - [x] customer_id: Customer for drop-shipping scenarios
-    - [ ] date_order: Order date (defaults to today)
+    - [x] date_order: Order date (defaults to today)
     - [x] date_planned: Expected delivery date
-    - [ ] notes: Terms, conditions, special instructions
+    - [x] notes: Terms, conditions, special instructions
     - [x] order_line: Purchase order items
     - [ ] company_id, user_id, currency_id: Business settings
-    - [ ] project_id: Link to project for tracking
+    - [x] project_id: Link to project for tracking
     - [ ] picking_type_id: Warehouse operation type
     - [ ] payment_term_id: Payment terms with supplier
     - [ ] fiscal_position_id: Tax configuration
