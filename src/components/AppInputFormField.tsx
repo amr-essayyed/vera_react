@@ -1,5 +1,4 @@
 import {startCase} from "lodash";
-import type { UseQueryResult } from "@tanstack/react-query";
 import { FormControl, FormField, FormItem, FormMessage } from "./ui/form";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
@@ -25,7 +24,7 @@ export default function AppInputFormField({
                 <FormItem>
                     <Label>{startCase(label)}</Label>
                         <FormControl>
-                            <Input { ...field} type={type} />
+                            <Input { ...field} type={type} placeholder={`Enter ${startCase(label)}`} />
                         </FormControl>
                     <FormMessage />
                 </FormItem>

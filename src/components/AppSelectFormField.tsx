@@ -34,7 +34,7 @@ export default function AppSelectFormField({
                                     <SelectValue placeholder={resourceState.isLoading ? `Loading ${startCase(label)}...` : `Select ${startCase(label)}`} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="null">No {startCase(label)}</SelectItem>
+                                    <SelectItem value="0">No {startCase(label)}</SelectItem>
                                     {resourceState.data?.map((resource: any) => (
                                         <SelectItem key={resource.id} value={String(resource.id)}>
                                             {resource.name}

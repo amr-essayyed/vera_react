@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "./ui/card";
 import type { Icon } from "@tabler/icons-react";
 
 type tProps = {
-	icon: LucideIcon;
+	icon: LucideIcon & LucideIcon;
 	value: number | string;
 	description: string;
 	color: string;

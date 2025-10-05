@@ -35,14 +35,14 @@ export default function PurchaseOrderCreatePage() {
 	const { data: products, isLoading: isProductsLoading, error: productsError } = useAllResource("product");
 
 	// Additional data for form fields
-	const { data: currencies, isLoading: isCurrenciesLoading, error: currenciesError } = useAllResource("currency");
-	const { data: companies, isLoading: isCompaniesLoading, error: companiesError } = useAllResource("company");
-	const { data: users, isLoading: isUsersLoading, error: usersError } = useAllResource("user");
-	const { data: projects, isLoading: isProjectsLoading, error: projectsError } = useAllResource("project");
-	const { data: pickingTypes, isLoading: isPickingTypesLoading, error: pickingTypesError } = useAllResource("pickingType");
-	const { data: paymentTerms, isLoading: isPaymentTermsLoading, error: paymentTermsError } = useAllResource("paymentTerm");
-	const { data: fiscalPositions, isLoading: isFiscalPositionsLoading, error: fiscalPositionsError } = useAllResource("fiscalPosition");
-	const { data: incoterms, isLoading: isIncotermsLoading, error: incotermsError } = useAllResource("incoterm");
+	// const { data: currencies, isLoading: isCurrenciesLoading, error: currenciesError } = useAllResource("currency");
+	// const { data: companies, isLoading: isCompaniesLoading, error: companiesError } = useAllResource("company");
+	// const { data: users, isLoading: isUsersLoading, error: usersError } = useAllResource("user");
+	// const { data: projects, isLoading: isProjectsLoading, error: projectsError } = useAllResource("project");
+	// const { data: pickingTypes, isLoading: isPickingTypesLoading, error: pickingTypesError } = useAllResource("pickingType");
+	// const { data: paymentTerms, isLoading: isPaymentTermsLoading, error: paymentTermsError } = useAllResource("paymentTerm");
+	// const { data: fiscalPositions, isLoading: isFiscalPositionsLoading, error: fiscalPositionsError } = useAllResource("fiscalPosition");
+	// const { data: incoterms, isLoading: isIncotermsLoading, error: incotermsError } = useAllResource("incoterm");
 
 	const form = useForm({
 		resolver: zodResolver(purchaseOrderFormSchema),
@@ -314,7 +314,7 @@ export default function PurchaseOrderCreatePage() {
 					</Alert>
 
 					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-						{/* Basic Information */}
+						{/* Order Information */}
 						<Card>
 							<CardHeader>
 								<CardTitle>Order Information</CardTitle>
@@ -350,27 +350,26 @@ export default function PurchaseOrderCreatePage() {
 										)}
 									/> */}
                                     {/* Depects the date within which the Quotoation should be confirmed and covnerted to a purchase order */}
-                                    <AppInputFormField
+                                    {/* <AppInputFormField
                                         formControl={form.control}
                                         name="date_order"
                                         label="Order Deadline"
                                         type='date'
+                                    /> */}
+                                    <AppInputFormField
+                                        formControl={form.control}
+                                        name="date_planned"
+                                        label="Expected Delivery Date"
+                                        type="date"
                                     />
-									<FormField
-										control={form.control}
-										name="date_planned"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Expected Delivery Date</Label>
-												<FormControl>
-													<Input {...field} type="date" value={field.value === false ? "" : field.value || ""} />
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
 								</div>
-								{/* <FormField
+								<AppInputFormField
+                                    formControl={form.control}
+                                    name="partner_ref"
+                                    label="Supplier Reference"
+                                    
+                                />
+                                {/* <FormField
 									control={form.control}
 									name="partner_ref"
 									render={({ field }) => (
