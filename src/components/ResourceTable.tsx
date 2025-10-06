@@ -12,7 +12,7 @@ type ResourceTableProps = {
 export default function ResourceTable<T extends WithId>({ ResourceRow, resourceName, condition, columns }: ResourceTableProps) {
 	const { data, isLoading, error } = useAllResource(resourceName, condition);
 
-	if (isLoading) return <LoadingSubPage />;
+	if (isLoading) return <LoadingSubPage message="Sales orders data loading" />;
 	if (error) return <div className="text-red-500 p-4">Error loading data: {error.message}</div>;
 
 	return (

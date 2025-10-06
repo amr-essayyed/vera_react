@@ -101,7 +101,7 @@ const resourceNameResolver: { [key: string]: { modelName: string; fields: {} } }
 	salesOrder: {
 		modelName: "sale.order",
 		fields: {
-			fields: ["id", "name", "partner_id", "partner_invoice_id", "partner_shipping_id", "sale_order_template_id", "validity_date", "pricelist_id", "payment_term_id", "state", "date_order", "user_id", "order_line", "amount_total"],
+			fields: ["id", "name", "partner_id", "partner_invoice_id", "partner_shipping_id", "sale_order_template_id", "validity_date", "pricelist_id", "payment_term_id", "state", "date_order", "user_id", "order_line", "amount_total",],
 		}
 
 	},
@@ -111,7 +111,15 @@ const resourceNameResolver: { [key: string]: { modelName: string; fields: {} } }
 			fields: [],
 		}
 
-	}
+	},
+	accountTax: {
+		modelName: "account.tax",
+		fields: {
+			fields: ["id", "name", "amount", "type_tax_use", "price_include"],
+		},
+	},
+
+
 };
 
 export default resourceNameResolver;

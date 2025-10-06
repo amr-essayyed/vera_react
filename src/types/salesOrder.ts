@@ -37,7 +37,7 @@ export const SaleOrderLineFormSchema = z.object({
   partner_id: many2oneSchema.optional(),
   referrer_id: many2oneSchema.optional(),
   partner_invoice_id: many2oneSchema.optional(),
-  partnerShipping_id: many2oneSchema.optional(),
+  partner_shipping_id: many2oneSchema.optional(),
   sales_order_template_id: many2oneSchema.optional(),
   validty_date: z.string().optional(),
   date_order: z.string().optional(),
@@ -45,6 +45,14 @@ export const SaleOrderLineFormSchema = z.object({
   pricelist_id: many2oneSchema.optional(),
   payment_term_id: many2oneSchema.optional(),
   product_template_id: many2oneSchema.optional(),
+  lines: z.array(
+    z.object({
+      product_id: many2oneSchema,
+      quantity: z.coerce.number().positive(),
+      price_unit: z.coerce.number().nonnegative(),
+      tax_ids: z.coerce.number().positive().optional(),
+    })
+  ).default([]),
 });
 
 
