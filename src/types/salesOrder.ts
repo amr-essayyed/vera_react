@@ -45,7 +45,23 @@ export const SaleOrderLineFormSchema = z.object({
   pricelist_id: many2oneSchema.optional(),
   payment_term_id: many2oneSchema.optional(),
   product_template_id: many2oneSchema.optional(),
-})
+});
+
+
+export const salesOrderLineSchema = z.object({
+  id: z.number().int().positive().optional(),
+  name: z.string().min(1), // description
+  product_id: many2oneSchema.optional(),
+  product_uom: many2oneSchema.optional(), // unit of measure
+  date_planned: z.string().optional(), // ISO datetime string from server
+  product_qty: z.number().nonnegative(),
+  price_unit: z.number().nonnegative(),
+  taxes_id: many2manySchema.optional(), // taxes applied
+  price_subtotal: z.number().optional(), // computed by Odoo
+  price_total: z.number().optional(), // computed by Odoo
+  display_type: z.enum(["line_section", "line_note"]).optional(), // Odoo display-only lines
+});
 
 export type SalesOrder = z.infer<typeof salesOrderSchema>
 export type SalesOrderLineForm = z.infer<typeof SaleOrderLineFormSchema>
+export type tSalesOrderLine = z.infer<typeof salesOrderLineSchema>
