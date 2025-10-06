@@ -125,6 +125,7 @@ export const purchaseOrderSchema = z.object({
 
 /** Extended purchase order line for form with image support */
 export const purchaseOrderLineFormSchema = z.object({
+    order_lines: z.array(z.object({
 	// id: z.number().int().positive().optional(),
 	name: z.string().optional(), // Make optional for form
 	product_id: many2oneSchema.optional(),
@@ -137,6 +138,7 @@ export const purchaseOrderLineFormSchema = z.object({
 	price_total: z.number().optional(), // computed by Odoo
 	// display_type: z.enum(["line_section", "line_note"]).optional(), // Odoo display-only lines
 	image: z.instanceof(File).optional(), // For form file upload
+    }))
 }); // .catchall(z.any()); // Allow custom fields as direct properties
 
 /** Form schema for purchase order creation - includes all relevant fields */
@@ -147,9 +149,10 @@ export const purchaseOrderFormSchema = purchaseOrderSchema.pick({
     customer_id: true,
     date_planned: true,
     notes: true,
-}).extend({
-	order_line: z.array(purchaseOrderLineFormSchema).optional().default([]),
-});
+})
+// .extend({
+// 	order_line: z.array(purchaseOrderLineFormSchema).optional().default([]),
+// });
 
 /** Handy TS types */
 // export type tPurchaseOrderApi = z.infer<typeof purchaseOrderApiSchema>;

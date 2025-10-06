@@ -6,8 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAllResource, useCreateMultipleResources, useCreateResource } from "@/hooks/useResource";
 import ItemsTable from "@/components/ItemsTable";
-import { purchaseOrderFormSchema, type tPurchaseOrderForm } from "@/types/purchaseOrder";
-import { Input } from "@/components/ui/input";
+import { many2oneSchema, purchaseOrderFormSchema, purchaseOrderLineFormSchema, type tPurchaseOrderForm, type tPurchaseOrderLineForm } from "@/types/purchaseOrder";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +19,8 @@ import { toast } from "sonner";
 import AppSelectFormField from "@/components/AppSelectFormField";
 import { imageToBase64 } from "@/utils/imageUtils";
 import AppInputFormField from "@/components/AppInputFormField";
+import type z from "zod";
+import { normalizeDateFields } from "@/utils/dateUtils";
 
 export default function PurchaseOrderCreatePage() {
 	const navigate = useNavigate();
@@ -44,33 +45,21 @@ export default function PurchaseOrderCreatePage() {
 	// const { data: fiscalPositions, isLoading: isFiscalPositionsLoading, error: fiscalPositionsError } = useAllResource("fiscalPosition");
 	// const { data: incoterms, isLoading: isIncotermsLoading, error: incotermsError } = useAllResource("incoterm");
 
-	const form = useForm({
+	const purchaseOrderForm = useForm({
 		resolver: zodResolver(purchaseOrderFormSchema),
 		defaultValues: {
-			state: "draft",
+			state: "purchase",
 			order_status: "pending",
-			order_line: [],
-			// invoice_ids: [],
-			// partner_ref: "",
-			// notes: "",
-			// shipping_status: "",
-			// payment_status: "",
-			// company_id: "default",
-			// user_id: "current",
-			// currency_id: "default",
-			// project_id: "none",
-			// picking_type_id: "default",
-			// payment_term_id: "default",
-			// fiscal_position_id: "default",
-			// incoterm_id: "none",
-			// dest_address_id: "none",
-			// invoice_status: "no",
-			// date_approve: "",
 		},
 	});
 
+	const purchaseOrderLineForm = useForm({
+		resolver: zodResolver(purchaseOrderLineFormSchema)
+	});
+
+    var purchaseOrderIdGlobal: z.infer<typeof many2oneSchema>;
 	// Submit handler
-	const onSubmit = async (values: tPurchaseOrderForm) => {
+	const onPurchaseOrderFormSubmit = async (values: tPurchaseOrderForm) => {
 		setIsSubmitting(true);
 		console.log("Form submitted with values:", values);
 
@@ -91,82 +80,8 @@ export default function PurchaseOrderCreatePage() {
 		}
 
 		try {
-			// Filter out empty lines (lines without product names)
-			const validOrderLines = (values.order_line || []).filter((line) => line.name && line.name.trim().length > 0);
-
-			// Process all order lines and convert images to base64
-			const newProducts = validOrderLines.filter((product) => !products?.some((p: any) => p.name === product.name));
-			console.log("newProducts:", newProducts);
-
-			const productsToCreate = await Promise.all(
-				newProducts.map(async (line) => {
-					const imageBase64 = line.image ? await imageToBase64(line.image) : null;
-
-					// Build the product object
-					const product: any = {
-						name: line.name,
-						list_price: line.price_unit,
-						image_1920: imageBase64,
-					};
-
-					return product;
-				})
-			);
-			console.log("Creating products:", productsToCreate);
-
-			// Step 1: Create all products first
-			const createdProducts = await mutateProduct(productsToCreate);
-			console.log(`Successfully created ${productsToCreate.length} products!`, createdProducts);
-
 			// Step 2: Create purchase order first (without order lines)
-			const purchaseOrderData: any = {
-				partner_id: values.partner_id, // Convert string to number for Odoo
-				state: values.state,
-			};
-			/**
-             * 
-			// Helper function to add field if it has a value (excluding default/none values)
-			const addFieldIfValue = (fieldName: string, value: any, converter?: (val: any) => any) => {
-				if (value && value.toString().trim() && 
-					!['none', 'default', 'current'].includes(value.toString().toLowerCase())) {
-					purchaseOrderData[fieldName] = converter ? converter(value) : value;
-				}
-			};
-
-			// Add optional string fields
-			addFieldIfValue('partner_ref', values.partner_ref);
-			addFieldIfValue('notes', values.notes);
-			addFieldIfValue('order_status', values.order_status);
-			addFieldIfValue('shipping_status', values.shipping_status);
-			addFieldIfValue('payment_status', values.payment_status);
-			addFieldIfValue('invoice_status', values.invoice_status);
-
-			// Add optional many2one fields (convert string to number)
-			addFieldIfValue('customer_id', values.customer_id, (val) => parseInt(val));
-			addFieldIfValue('company_id', values.company_id, (val) => parseInt(val));
-			addFieldIfValue('user_id', values.user_id, (val) => parseInt(val));
-			addFieldIfValue('currency_id', values.currency_id, (val) => parseInt(val));
-			addFieldIfValue('project_id', values.project_id, (val) => parseInt(val));
-			addFieldIfValue('picking_type_id', values.picking_type_id, (val) => parseInt(val));
-			addFieldIfValue('payment_term_id', values.payment_term_id, (val) => parseInt(val));
-			addFieldIfValue('fiscal_position_id', values.fiscal_position_id, (val) => parseInt(val));
-			addFieldIfValue('incoterm_id', values.incoterm_id, (val) => parseInt(val));
-			addFieldIfValue('dest_address_id', values.dest_address_id, (val) => parseInt(val)); **/
-
-			// Add optional date fields (convert to backend format: YYYY-MM-DD HH:MM:SS)
-			if (values.date_planned && values.date_planned.trim()) {
-				const datePlanned = new Date(values.date_planned);
-				if (!isNaN(datePlanned.getTime())) {
-					// Format as YYYY-MM-DD HH:MM:SS for backend
-					const year = datePlanned.getFullYear();
-					const month = String(datePlanned.getMonth() + 1).padStart(2, "0");
-					const day = String(datePlanned.getDate()).padStart(2, "0");
-					const hours = String(datePlanned.getHours()).padStart(2, "0");
-					const minutes = String(datePlanned.getMinutes()).padStart(2, "0");
-					const seconds = String(datePlanned.getSeconds()).padStart(2, "0");
-					purchaseOrderData.date_planned = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-				}
-			}
+			const purchaseOrderData = normalizeDateFields(values);
 
 			console.log("Creating purchase order:", purchaseOrderData);
 			const createdPurchaseOrder = await mutatePurchaseOrder(purchaseOrderData);
@@ -179,37 +94,82 @@ export default function PurchaseOrderCreatePage() {
 			if (!purchaseOrderId) {
 				throw new Error("Failed to get purchase order ID from response");
 			}
-
-			// Step 3: Create purchase order lines with purchase order and product references
-			const purchaseOrderLinesToCreate = validOrderLines.map((line, index) => ({
-				order_id: purchaseOrderId, // Reference to purchase order
-				product_id: createdProducts[index]?.id, // Reference to created product
-				product_qty: line.product_qty, // Using product_qty field
-				price_unit: line.price_unit,
-				name: line.name,
-			}));
-
-			console.log("Purchase order lines to create:", JSON.stringify(purchaseOrderLinesToCreate, null, 2));
-
-			// Only create purchase order lines if there are valid lines
-			if (purchaseOrderLinesToCreate.length > 0) {
-				console.log("Creating purchase order lines:", purchaseOrderLinesToCreate);
-				const createdPurchaseOrderLines = await mutatePurchaseOrderLine(purchaseOrderLinesToCreate);
-				console.log("Successfully created purchase order lines!", createdPurchaseOrderLines);
-			} else {
-				console.log("No order lines to create - purchase order created without items");
-			}
-
-			// Show success message and navigate
-			toast.success("Purchase order created successfully!");
-			navigate("/purchase-orders");
+            purchaseOrderIdGlobal = purchaseOrderId;
+			
 		} catch (error) {
 			console.error("Error in purchase order creation process:", error);
 			toast.error("Failed to create purchase order. Please try again.");
-		} finally {
-			setIsSubmitting(false);
 		}
 	};
+
+    async function onPurchaseOrderLineFormSubmit(values: tPurchaseOrderLineForm, purchaseOrderId: z.infer<typeof many2oneSchema>) {
+        // Filter out empty lines (lines without product names)
+        const validOrderLines = (values.order_lines || []).filter((line) => line.name && line.name.trim().length > 0);
+
+        // Process all order lines and convert images to base64
+        const newProducts = validOrderLines.filter((product) => !products?.some((p: any) => p.name === product.name));
+        console.log("newProducts:", newProducts);
+
+        const productsToCreate = await Promise.all(
+            newProducts.map(async (line) => {
+                const imageBase64 = line.image ? await imageToBase64(line.image) : null;
+
+                // Build the product object
+                const product: any = {
+                    name: line.name,
+                    list_price: line.price_unit,
+                    image_1920: imageBase64,
+                };
+
+                return product;
+            })
+        );
+        console.log("Creating products:", productsToCreate);
+
+        // Step 1: Create all products first
+        const createdProducts = await mutateProduct(productsToCreate);
+        console.log(`Successfully created ${productsToCreate.length} products!`, createdProducts);
+
+        // Step 3: Create purchase order lines with purchase order and product references
+			const purchaseOrderLinesToCreate = validOrderLines.map((line, index) => ({
+            order_id: purchaseOrderId, // Reference to purchase order
+            product_id: createdProducts[index]?.id, // Reference to created product
+            product_qty: line.product_qty, // Using product_qty field
+            price_unit: line.price_unit,
+            name: line.name,
+        }));
+
+        console.log("Purchase order lines to create:", JSON.stringify(purchaseOrderLinesToCreate, null, 2));
+
+        // Only create purchase order lines if there are valid lines
+        if (purchaseOrderLinesToCreate.length > 0) {
+            console.log("Creating purchase order lines:", purchaseOrderLinesToCreate);
+            const createdPurchaseOrderLines = await mutatePurchaseOrderLine(purchaseOrderLinesToCreate);
+            console.log("Successfully created purchase order lines!", createdPurchaseOrderLines);
+        } else {
+            console.log("No order lines to create - purchase order created without items");
+        }
+
+        // Show success message and navigate
+        toast.success("Purchase order created successfully!");
+        navigate("/purchase-orders");
+    }
+
+    async function handleSaveForms() {
+        console.log('handle Save forms');
+        
+        try {
+        // Trigger form submission for both forms
+        await purchaseOrderForm.handleSubmit(onPurchaseOrderFormSubmit)();
+
+        purchaseOrderLineForm.handleSubmit((values) => {console.log("values: ", values); return onPurchaseOrderLineFormSubmit(values, purchaseOrderIdGlobal)})();
+        } catch (error) {
+            console.error("Error in handleSaveForms:", error);
+            toast.error("Failed to save forms. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
 
 	const isLoading = isProductsLoading || contactState.isLoading //|| isCompaniesLoading || isUsersLoading || isCurrenciesLoading || isProjectsLoading || isPickingTypesLoading || isPaymentTermsLoading || isFiscalPositionsLoading || isIncotermsLoading;
 	const hasErrors = productsError || contactState.error //|| currenciesError //|| companiesError || usersError || projectsError || pickingTypesError || paymentTermsError || fiscalPositionsError || incotermsError;
@@ -218,17 +178,18 @@ export default function PurchaseOrderCreatePage() {
 	const handleSupplierCreated = (newSupplier: any) => {
 		// Refresh suppliers data would be ideal, but for now we can set the form value
 		const supplierId = newSupplier.id || newSupplier;
-		form.setValue("partner_id", supplierId);
+		purchaseOrderForm.setValue("partner_id", supplierId);
 		console.log("New supplier created:", newSupplier);
 	};
 
 	// Check if form has been modified
-	const formValues = form.watch();
+	const POformValues = purchaseOrderForm.watch();
+	const POLineformValues = purchaseOrderLineForm.watch();
 	const hasUnsavedChanges =
-		formValues.partner_id ||
+		POformValues.partner_id ||
 		// || formValues.partner_ref
-		formValues.notes ||
-		(formValues.order_line || []).some((line) => line.name || (line.product_qty || 0) > 1 || (line.price_unit || 0) > 0);
+		POformValues.notes ||
+		(POLineformValues.order_lines || []).some((line) => line.name || (line.product_qty || 0) > 1 || (line.price_unit || 0) > 0);
 
 	// Warn before leaving if there are unsaved changes
 	useEffect(() => {
@@ -302,7 +263,7 @@ export default function PurchaseOrderCreatePage() {
 
 			{/* Form */}
 			<div className="max-w-6xl mx-auto px-4 pb-6">
-				<Form {...form}>
+				<Form {...purchaseOrderForm}>
 					{/* Field Information Alert */}
 					<Alert className="mb-4">
 						<AlertCircle className="h-4 w-4" />
@@ -313,7 +274,7 @@ export default function PurchaseOrderCreatePage() {
 						</AlertDescription>
 					</Alert>
 
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+					<form onSubmit={purchaseOrderForm.handleSubmit(onPurchaseOrderFormSubmit)} className="space-y-6">
 						{/* Order Information */}
 						<Card>
 							<CardHeader>
@@ -322,14 +283,14 @@ export default function PurchaseOrderCreatePage() {
 							<CardContent className="space-y-4">
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <AppSelectFormField 
-                                        formControl={form.control}
+                                        formControl={purchaseOrderForm.control}
                                         name="partner_id"
                                         label="supplier"
                                         resourceState={contactState}
                                         createNew={<SupplierCreateDialog onSupplierCreated={handleSupplierCreated} />}
                                     />
 									<AppSelectFormField
-                                        formControl={form.control}
+                                        formControl={purchaseOrderForm.control}
                                         name="customer_id"
                                         label="customer"
                                         resourceState={contactState}
@@ -357,18 +318,18 @@ export default function PurchaseOrderCreatePage() {
                                         type='date'
                                     /> */}
                                     <AppInputFormField
-                                        formControl={form.control}
+                                        formControl={purchaseOrderForm.control}
                                         name="date_planned"
                                         label="Expected Delivery Date"
-                                        type="date"
+                                        type="datetime-local"
                                     />
 								</div>
-								<AppInputFormField
-                                    formControl={form.control}
+								{/* <AppInputFormField
+                                    formControl={purchaseOrderForm.control}
                                     name="partner_ref"
                                     label="Supplier Reference"
                                     
-                                />
+                                /> */}
                                 {/* <FormField
 									control={form.control}
 									name="partner_ref"
@@ -619,7 +580,7 @@ export default function PurchaseOrderCreatePage() {
 							<CardContent className="space-y-4">
 								<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 									<FormField
-										control={form.control}
+										control={purchaseOrderForm.control}
 										name="order_status"
 										render={({ field }) => (
 											<FormItem>
@@ -709,45 +670,6 @@ export default function PurchaseOrderCreatePage() {
 							</CardContent>
 						</Card>
 
-						{/* Order Lines */}
-						<Card>
-							<CardHeader>
-								<CardTitle>Order Items (Optional)</CardTitle>
-								<p className="text-sm text-gray-500 mt-1">Add items to your purchase order. You can paste data from spreadsheets (Ctrl+V) or add items manually. Leave empty to create a purchase order without specific items.</p>
-							</CardHeader>
-							<CardContent>
-								<ItemsTable form={form} isLoading={isLoading} />
-
-								{/* Order Summary */}
-								<div className="mt-6 pt-4 border-t">
-									<div className="flex justify-end">
-										<div className="w-64 space-y-2">
-											<div className="flex justify-between text-sm">
-												<span>Subtotal:</span>
-												<span className="font-medium">
-													$
-													{form
-														.watch("order_line")
-														?.reduce((total, line) => total + (line.product_qty || 0) * (line.price_unit || 0), 0)
-														.toFixed(2) || "0.00"}
-												</span>
-											</div>
-											<div className="flex justify-between text-base font-semibold border-t pt-2">
-												<span>Total:</span>
-												<span>
-													$
-													{form
-														.watch("order_line")
-														?.reduce((total, line) => total + (line.product_qty || 0) * (line.price_unit || 0), 0)
-														.toFixed(2) || "0.00"}
-												</span>
-											</div>
-										</div>
-									</div>
-								</div>
-							</CardContent>
-						</Card>
-
 						{/* Additional Information */}
 						<Card>
 							<CardHeader>
@@ -755,7 +677,7 @@ export default function PurchaseOrderCreatePage() {
 							</CardHeader>
 							<CardContent>
 								<FormField
-									control={form.control}
+									control={purchaseOrderForm.control}
 									name="notes"
 									render={({ field }) => (
 										<FormItem>
@@ -771,28 +693,75 @@ export default function PurchaseOrderCreatePage() {
 						</Card>
 
 						{/* Actions */}
-						<div className="flex justify-end space-x-4">
-							<Link to="/purchase-orders">
-								<Button type="button" variant="outline">
-									Cancel
-								</Button>
-							</Link>
-							<Button type="submit" disabled={isSubmitting || isLoading}>
-								{isSubmitting ? (
-									<>
-										<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-										Creating...
-									</>
-								) : (
-									<>
-										<Save className="h-4 w-4 mr-2" />
-										Create Purchase Order
-									</>
-								)}
-							</Button>
-						</div>
+						{/*  */}
 					</form>
 				</Form>
+                <Form {...purchaseOrderLineForm}>
+                    <form className="space-y-6">
+                        						{/* Order Lines */}
+						<Card>
+							<CardHeader>
+								<CardTitle>Order Items (Optional)</CardTitle>
+								<p className="text-sm text-gray-500 mt-1">Add items to your purchase order. You can paste data from spreadsheets (Ctrl+V) or add items manually. Leave empty to create a purchase order without specific items.</p>
+							</CardHeader>
+							<CardContent>
+								<ItemsTable form={purchaseOrderLineForm} isLoading={isLoading} />
+
+								{/* Order Summary */}
+								<div className="mt-6 pt-4 border-t">
+									<div className="flex justify-end">
+										<div className="w-64 space-y-2">
+											<div className="flex justify-between text-sm">
+												<span>Subtotal:</span>
+												<span className="font-medium">
+													$
+													{purchaseOrderLineForm.watch("order_lines")
+														?.reduce((total, line) => total + (line.product_qty || 0) * (line.price_unit || 0), 0)
+														.toFixed(2) || "0.00"}
+												</span>
+											</div>
+											<div className="flex justify-between text-base font-semibold border-t pt-2">
+												<span>Total:</span>
+												<span>
+													$
+													{purchaseOrderLineForm
+														.watch("order_lines")
+														?.reduce((total, line) => total + (line.product_qty || 0) * (line.price_unit || 0), 0)
+														.toFixed(2) || "0.00"}
+												</span>
+											</div>
+										</div>
+									</div>
+								</div>
+							</CardContent>
+						</Card>
+                    </form>
+                </Form>
+                {/* Actions master */}
+                <div className="flex justify-end space-x-4">
+                    <Link to="/purchase-orders">
+                        <Button type="button" variant="outline">
+                            Cancel
+                        </Button>
+                    </Link>
+                    <Button 
+                        // type="submit" 
+                        onClick={handleSaveForms}
+                        disabled={isSubmitting || isLoading}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                Creating...
+                            </>
+                        ) : (
+                            <>
+                                <Save className="h-4 w-4 mr-2" />
+                                Create Purchase Order
+                            </>
+                        )}
+                    </Button>
+                </div>
 			</div>
 		</div>
 	);
