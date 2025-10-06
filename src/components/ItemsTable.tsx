@@ -39,7 +39,7 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 
 	const { fields, append, remove } = useFieldArray({
 		control: form.control,
-		name: "order_line",
+		name: "order_lines",
 	});
 
 	// const { fields: customColumnFields, append: appendCustomColumn, remove: removeCustomColumn } = useFieldArray({
@@ -73,7 +73,7 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 
 	// const updateCustomCellData = useCallback(
 	// (columnId: string, rowIndex: number, value: any) => {
-	//     form.setValue(`order_line.${rowIndex}.${columnId}` as any, value);
+	//     form.setValue(`order_lines.${rowIndex}.${columnId}` as any, value);
 	// },
 	// [form]
 	// );
@@ -97,7 +97,7 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 						});
 
 						// Update the form field
-						form.setValue(`order_line.${rowIndex}.image`, file);
+						form.setValue(`order_lines.${rowIndex}.image`, file);
 					}
 					break;
 				}
@@ -148,15 +148,15 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 					// Map column indices to field names (skip image column at index 0)
 					switch (targetColIndex) {
 						case 1: // Name column
-							form.setValue(`order_line.${targetRowIndex}.name`, cellValue || "");
+							form.setValue(`order_lines.${targetRowIndex}.name`, cellValue || "");
 							break;
 						case 2: // Quantity column
 							const quantity = parseInt(cellValue) || 1;
-							form.setValue(`order_line.${targetRowIndex}.product_qty`, quantity);
+							form.setValue(`order_lines.${targetRowIndex}.product_qty`, quantity);
 							break;
 						case 3: // Price column
 							const price = parseFloat(cellValue) || 0;
-							form.setValue(`order_line.${targetRowIndex}.price_unit`, price);
+							form.setValue(`order_lines.${targetRowIndex}.price_unit`, price);
 							break;
 						// default:
 						//     // Handle custom columns (starting from index 4)
@@ -212,7 +212,7 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 							<TableCell onClick={() => handleCellClick(index, 0)} className={`cursor-pointer ${selectedCell?.row === index && selectedCell?.col === 0 ? "bg-blue-100" : ""}`}>
 								<FormField
 									control={form.control}
-									name={`order_line.${index}.image`}
+									name={`order_lines.${index}.image`}
 									render={({ field }) => (
 										<FormItem>
 											<FormControl>
@@ -234,7 +234,7 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 							<TableCell onClick={() => handleCellClick(index, 1)} className={selectedCell?.row === index && selectedCell?.col === 1 ? "bg-blue-100" : ""}>
 								<FormField
 									control={form.control}
-									name={`order_line.${index}.name`}
+									name={`order_lines.${index}.name`}
 									render={({ field }) => (
 										<FormItem>
 											<FormControl>
@@ -248,7 +248,7 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 							<TableCell onClick={() => handleCellClick(index, 2)} className={selectedCell?.row === index && selectedCell?.col === 2 ? "bg-blue-100" : ""}>
 								<FormField
 									control={form.control}
-									name={`order_line.${index}.product_qty`}
+									name={`order_lines.${index}.product_qty`}
 									render={({ field }) => (
 										<FormItem>
 											<FormControl>
@@ -262,7 +262,7 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 							<TableCell onClick={() => handleCellClick(index, 3)} className={selectedCell?.row === index && selectedCell?.col === 3 ? "bg-blue-100" : ""}>
 								<FormField
 									control={form.control}
-									name={`order_line.${index}.price_unit`}
+									name={`order_lines.${index}.price_unit`}
 									render={({ field }) => (
 										<FormItem>
 											<FormControl>
@@ -274,7 +274,7 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 								/>
 							</TableCell>
 							<TableCell className="text-right font-medium">
-								${((form.watch(`order_line.${index}.product_qty`) || 0) * (form.watch(`order_line.${index}.price_unit`) || 0)).toFixed(2)}
+								${((form.watch(`order_lines.${index}.product_qty`) || 0) * (form.watch(`order_lines.${index}.price_unit`) || 0)).toFixed(2)}
 							</TableCell>
 							<TableCell>
 								<Button type="button" variant="destructive" size="sm" onClick={() => remove(index)}>
@@ -299,7 +299,7 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 							const emptyIndices = fields
 								.map((field, index) => ({ field, index }))
 								.filter(({ index }) => {
-									const line = form.watch(`order_line.${index}`);
+									const line = form.watch(`order_lines.${index}`);
 									return !line?.name && (line?.product_qty || 0) <= 0 && (line?.price_unit || 0) <= 0;
 								})
 								.map(({ index }) => index)
@@ -319,7 +319,7 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
               <pre className="text-xs bg-white p-2 rounded border overflow-auto">
                 {JSON.stringify({
                   customColumns: form.getValues("customColumns"),
-                  orderLines: form.getValues("order_line")
+                  orderLines: form.getValues("order_lines")
                 }, null, 2)}
               </pre>
             </div>
