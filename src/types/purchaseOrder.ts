@@ -146,6 +146,7 @@ export const purchaseOrderFormSchema = purchaseOrderSchema.pick({
     state: true,
     order_status: true,
 	partner_id: true,
+    partner_ref: true,
     customer_id: true,
     date_planned: true,
     notes: true,

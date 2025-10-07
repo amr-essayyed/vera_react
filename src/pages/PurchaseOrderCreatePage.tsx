@@ -39,7 +39,6 @@ export default function PurchaseOrderCreatePage() {
 	// const { data: currencies, isLoading: isCurrenciesLoading, error: currenciesError } = useAllResource("currency");
 	// const { data: companies, isLoading: isCompaniesLoading, error: companiesError } = useAllResource("company");
 	// const { data: users, isLoading: isUsersLoading, error: usersError } = useAllResource("user");
-	// const { data: projects, isLoading: isProjectsLoading, error: projectsError } = useAllResource("project");
 	// const { data: pickingTypes, isLoading: isPickingTypesLoading, error: pickingTypesError } = useAllResource("pickingType");
 	// const { data: paymentTerms, isLoading: isPaymentTermsLoading, error: paymentTermsError } = useAllResource("paymentTerm");
 	// const { data: fiscalPositions, isLoading: isFiscalPositionsLoading, error: fiscalPositionsError } = useAllResource("fiscalPosition");
@@ -48,7 +47,7 @@ export default function PurchaseOrderCreatePage() {
 	const purchaseOrderForm = useForm({
 		resolver: zodResolver(purchaseOrderFormSchema),
 		defaultValues: {
-			state: "purchase",
+			state: "draft",
 			order_status: "pending",
 		},
 	});
@@ -60,46 +59,20 @@ export default function PurchaseOrderCreatePage() {
     var purchaseOrderIdGlobal: z.infer<typeof many2oneSchema>;
 	// Submit handler
 	const onPurchaseOrderFormSubmit = async (values: tPurchaseOrderForm) => {
-		setIsSubmitting(true);
-		console.log("Form submitted with values:", values);
+        console.log("PO Form values:", values);
 
-		// Check if any data is still loading
-		if (isProductsLoading || contactState.isLoading) {
-			console.error("Data is still loading, please wait...");
-			toast.error("Please wait for all data to load before submitting the form.");
-			setIsSubmitting(false);
-			return;
-		}
+        setIsSubmitting(true);
 
-		// Check if required data failed to load
-		if (!products || !contactState.data) {
-			console.error("Required data failed to load:", { products: !!products, suppliers: !!contactState.data });
-			toast.error("Some required data failed to load. Please refresh the page and try again.");
-			setIsSubmitting(false);
-			return;
-		}
+        const purchaseOrderData = normalizeDateFields(values);
+        // Create PO
+        const createdPurchaseOrder = await mutatePurchaseOrder(purchaseOrderData);
+        // Extract the ID from the response - it might be just the number or in a different property
+        const purchaseOrderId = createdPurchaseOrder.id || createdPurchaseOrder || (typeof createdPurchaseOrder === "number" ? createdPurchaseOrder : null);
 
-		try {
-			// Step 2: Create purchase order first (without order lines)
-			const purchaseOrderData = normalizeDateFields(values);
-
-			console.log("Creating purchase order:", purchaseOrderData);
-			const createdPurchaseOrder = await mutatePurchaseOrder(purchaseOrderData);
-			console.log("Successfully created purchase order!", createdPurchaseOrder);
-
-			// Extract the ID from the response - it might be just the number or in a different property
-			const purchaseOrderId = createdPurchaseOrder.id || createdPurchaseOrder || (typeof createdPurchaseOrder === "number" ? createdPurchaseOrder : null);
-			console.log("Purchase order ID:", purchaseOrderId);
-
-			if (!purchaseOrderId) {
-				throw new Error("Failed to get purchase order ID from response");
-			}
-            purchaseOrderIdGlobal = purchaseOrderId;
-			
-		} catch (error) {
-			console.error("Error in purchase order creation process:", error);
-			toast.error("Failed to create purchase order. Please try again.");
-		}
+        if (!purchaseOrderId) {
+            throw new Error("Failed to get purchase order ID from response");
+        }
+        purchaseOrderIdGlobal = purchaseOrderId;
 	};
 
     async function onPurchaseOrderLineFormSubmit(values: tPurchaseOrderLineForm, purchaseOrderId: z.infer<typeof many2oneSchema>) {
@@ -108,7 +81,6 @@ export default function PurchaseOrderCreatePage() {
 
         // Process all order lines and convert images to base64
         const newProducts = validOrderLines.filter((product) => !products?.some((p: any) => p.name === product.name));
-        console.log("newProducts:", newProducts);
 
         const productsToCreate = await Promise.all(
             newProducts.map(async (line) => {
@@ -124,14 +96,12 @@ export default function PurchaseOrderCreatePage() {
                 return product;
             })
         );
-        console.log("Creating products:", productsToCreate);
 
         // Step 1: Create all products first
         const createdProducts = await mutateProduct(productsToCreate);
-        console.log(`Successfully created ${productsToCreate.length} products!`, createdProducts);
 
         // Step 3: Create purchase order lines with purchase order and product references
-			const purchaseOrderLinesToCreate = validOrderLines.map((line, index) => ({
+		const purchaseOrderLinesToCreate = validOrderLines.map((line, index) => ({
             order_id: purchaseOrderId, // Reference to purchase order
             product_id: createdProducts[index]?.id, // Reference to created product
             product_qty: line.product_qty, // Using product_qty field
@@ -139,32 +109,31 @@ export default function PurchaseOrderCreatePage() {
             name: line.name,
         }));
 
-        console.log("Purchase order lines to create:", JSON.stringify(purchaseOrderLinesToCreate, null, 2));
-
         // Only create purchase order lines if there are valid lines
         if (purchaseOrderLinesToCreate.length > 0) {
-            console.log("Creating purchase order lines:", purchaseOrderLinesToCreate);
-            const createdPurchaseOrderLines = await mutatePurchaseOrderLine(purchaseOrderLinesToCreate);
-            console.log("Successfully created purchase order lines!", createdPurchaseOrderLines);
-        } else {
-            console.log("No order lines to create - purchase order created without items");
+            await mutatePurchaseOrderLine(purchaseOrderLinesToCreate);
         }
-
-        // Show success message and navigate
-        toast.success("Purchase order created successfully!");
-        navigate("/purchase-orders");
     }
 
     async function handleSaveForms() {
         console.log('handle Save forms');
         
         try {
-        // Trigger form submission for both forms
-        await purchaseOrderForm.handleSubmit(onPurchaseOrderFormSubmit)();
+            const isPurchaseOrderValid = await purchaseOrderForm.trigger();
+            const isPurchaseOrderLineValid = await purchaseOrderLineForm.trigger();
+            
+            if (!isPurchaseOrderValid || !isPurchaseOrderLineValid) {
+                toast.error("Fix fields before submitting")
+                throw new Error("Validation Erro");
+            }
 
-        purchaseOrderLineForm.handleSubmit((values) => {console.log("values: ", values); return onPurchaseOrderLineFormSubmit(values, purchaseOrderIdGlobal)})();
+            // Trigger form submission for both forms
+            await purchaseOrderForm.handleSubmit(onPurchaseOrderFormSubmit)();
+            await purchaseOrderLineForm.handleSubmit((values) => onPurchaseOrderLineFormSubmit(values, purchaseOrderIdGlobal))();
+
+            toast.success("Purchase order created successfully!");
+            navigate("/purchase-orders");
         } catch (error) {
-            console.error("Error in handleSaveForms:", error);
             toast.error("Failed to save forms. Please try again.");
         } finally {
             setIsSubmitting(false);
@@ -324,25 +293,12 @@ export default function PurchaseOrderCreatePage() {
                                         type="datetime-local"
                                     />
 								</div>
-								{/* <AppInputFormField
+								<AppInputFormField
                                     formControl={purchaseOrderForm.control}
                                     name="partner_ref"
                                     label="Supplier Reference"
-                                    
-                                /> */}
-                                {/* <FormField
-									control={form.control}
-									name="partner_ref"
-									render={({ field }) => (
-										<FormItem>
-											<Label>Supplier Reference</Label>
-											<FormControl>
-												<Input {...field} placeholder="Enter supplier reference (optional)" />
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/> */}
+                                    type="text"  
+                                />
 							</CardContent>
 						</Card>
 
