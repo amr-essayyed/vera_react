@@ -20,7 +20,7 @@ import AppSelectFormField from "@/components/AppSelectFormField";
 import AppInputFormField from "@/components/AppInputFormField";
 import type z from "zod";
 import { normalizeDateFields } from "@/utils/dateUtils";
-import { onOrderLineFormSubmit } from "@/hooks/useOrderLines";
+import { useOrderLine } from "@/hooks/useOrderLines";
 import type { many2oneSchema } from "@/types/odooSchemas";
 
 export default function PurchaseOrderCreatePage() {
@@ -28,8 +28,8 @@ export default function PurchaseOrderCreatePage() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const { mutateAsync: mutatePurchaseOrder } = useCreateResource("purchaseOrder");
-	const { mutateAsync: mutatePurchaseOrderLine } = useCreateMultipleResources("purchaseOrderLine");
-	const { mutateAsync: mutateProduct } = useCreateMultipleResources("product");
+
+    const { onOrderLineFormSubmit } = useOrderLine('purchaseOrderLine')
 
 	// use query: getAll suppliers and products
 	// const { data: suppliers, isLoading: isSuppliersLoading, error: suppliersError } = useAllResource("contact" /* , [["supplier_rank", ">", 0]] */);
