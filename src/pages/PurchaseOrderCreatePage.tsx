@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAllResource, useCreateMultipleResources, useCreateResource } from "@/hooks/useResource";
 import ItemsTable from "@/components/ItemsTable";
-import { many2oneSchema, purchaseOrderFormSchema, purchaseOrderLineFormSchema, type tPurchaseOrderForm, type tPurchaseOrderLineForm } from "@/types/purchaseOrder";
+import { purchaseOrderFormSchema, purchaseOrderLineFormSchema, type tPurchaseOrderForm, type tPurchaseOrderLineForm } from "@/types/purchaseOrder";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,10 +17,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import SupplierCreateDialog from "@/components/SupplierCreateDialog";
 import { toast } from "sonner";
 import AppSelectFormField from "@/components/AppSelectFormField";
-import { imageToBase64 } from "@/utils/imageUtils";
 import AppInputFormField from "@/components/AppInputFormField";
 import type z from "zod";
 import { normalizeDateFields } from "@/utils/dateUtils";
+import { onOrderLineFormSubmit } from "@/hooks/useOrderLines";
+import type { many2oneSchema } from "@/types/odooSchemas";
 
 export default function PurchaseOrderCreatePage() {
 	const navigate = useNavigate();
@@ -75,46 +76,6 @@ export default function PurchaseOrderCreatePage() {
         purchaseOrderIdGlobal = purchaseOrderId;
 	};
 
-    async function onPurchaseOrderLineFormSubmit(values: tPurchaseOrderLineForm, purchaseOrderId: z.infer<typeof many2oneSchema>) {
-        // Filter out empty lines (lines without product names)
-        const validOrderLines = (values.order_lines || []).filter((line) => line.name && line.name.trim().length > 0);
-
-        // Process all order lines and convert images to base64
-        const newProducts = validOrderLines.filter((product) => !products?.some((p: any) => p.name === product.name));
-
-        const productsToCreate = await Promise.all(
-            newProducts.map(async (line) => {
-                const imageBase64 = line.image ? await imageToBase64(line.image) : null;
-
-                // Build the product object
-                const product: any = {
-                    name: line.name,
-                    list_price: line.price_unit,
-                    image_1920: imageBase64,
-                };
-
-                return product;
-            })
-        );
-
-        // Step 1: Create all products first
-        const createdProducts = await mutateProduct(productsToCreate);
-
-        // Step 3: Create purchase order lines with purchase order and product references
-		const purchaseOrderLinesToCreate = validOrderLines.map((line, index) => ({
-            order_id: purchaseOrderId, // Reference to purchase order
-            product_id: createdProducts[index]?.id, // Reference to created product
-            product_qty: line.product_qty, // Using product_qty field
-            price_unit: line.price_unit,
-            name: line.name,
-        }));
-
-        // Only create purchase order lines if there are valid lines
-        if (purchaseOrderLinesToCreate.length > 0) {
-            await mutatePurchaseOrderLine(purchaseOrderLinesToCreate);
-        }
-    }
-
     async function handleSaveForms() {
         console.log('handle Save forms');
         
@@ -129,7 +90,7 @@ export default function PurchaseOrderCreatePage() {
 
             // Trigger form submission for both forms
             await purchaseOrderForm.handleSubmit(onPurchaseOrderFormSubmit)();
-            await purchaseOrderLineForm.handleSubmit((values) => onPurchaseOrderLineFormSubmit(values, purchaseOrderIdGlobal))();
+            await purchaseOrderLineForm.handleSubmit((values) => onOrderLineFormSubmit(values, purchaseOrderIdGlobal, products))();
 
             toast.success("Purchase order created successfully!");
             navigate("/purchase-orders");
@@ -150,29 +111,6 @@ export default function PurchaseOrderCreatePage() {
 		purchaseOrderForm.setValue("partner_id", supplierId);
 		console.log("New supplier created:", newSupplier);
 	};
-
-	// Check if form has been modified
-	const POformValues = purchaseOrderForm.watch();
-	const POLineformValues = purchaseOrderLineForm.watch();
-	const hasUnsavedChanges =
-		POformValues.partner_id ||
-		// || formValues.partner_ref
-		POformValues.notes ||
-		(POLineformValues.order_lines || []).some((line) => line.name || (line.product_qty || 0) > 1 || (line.price_unit || 0) > 0);
-
-	// Warn before leaving if there are unsaved changes
-	useEffect(() => {
-		const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-			if (hasUnsavedChanges && !isSubmitting) {
-				e.preventDefault();
-				// Modern browsers ignore the returnValue, but we set it for compatibility
-				return (e.returnValue = "You have unsaved changes. Are you sure you want to leave?");
-			}
-		};
-
-		window.addEventListener("beforeunload", handleBeforeUnload);
-		return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-	}, [hasUnsavedChanges, isSubmitting]);
 
 	return (
 		<div className="min-h-screen bg-gray-50 dark:bg-black">
@@ -203,7 +141,8 @@ export default function PurchaseOrderCreatePage() {
 
 			{/* Error and Loading States */}
 			<div className="max-w-6xl mx-auto px-4 py-4">
-				{hasErrors && (
+				{/* debuging only */}
+                {hasErrors && (
 					<Alert className="mb-4" variant="destructive">
 						<AlertCircle className="h-4 w-4" />
 						<AlertDescription>
