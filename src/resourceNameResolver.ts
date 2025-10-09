@@ -104,6 +104,28 @@ const resourceNameResolver: { [key: string]: { modelName: string; fields: {} } }
 			fields: ["id", "name", "email", "phone", "mobile", "website", "street", "street2", "city", "state_id", "zip", "country_id", "vat", "is_company", "supplier_rank", "customer_rank", "category_id", "comment", "avatar_1024"],
 		},
 	},
+	salesOrder: {
+		modelName: "sale.order",
+		fields: {
+			fields: ["id", "name", "partner_id", "partner_invoice_id", "partner_shipping_id", "sale_order_template_id", "validity_date", "pricelist_id", "payment_term_id", "state", "date_order", "user_id", "order_line", "amount_total",],
+		}
+
+	},
+	accountPaymentTerm: {
+		modelName: "account.payment.term",
+		fields: {
+			fields: [],
+		}
+
+	},
+	accountTax: {
+		modelName: "account.tax",
+		fields: {
+			fields: ["id", "name", "amount", "type_tax_use", "price_include"],
+		},
+	},
+
+
 };
 
 export default resourceNameResolver;

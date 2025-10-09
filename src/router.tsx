@@ -12,6 +12,9 @@ import ProductsPage from "./pages/ProductsPage";
 import SuppliersPage from "./pages/SuppliersPage";
 import SupplierDetailPage from "./pages/SupplierDetailPage";
 import SupplierCreatePage from "./pages/SupplierCreatePage";
+import SalesOrderLinePage from "./pages/SalesOrderLinePage";
+import SalesOrderLinePageDetails from "./pages/SalesOrderLinePageDetails";
+import SalesOrderCreatePage from "./pages/SalesOrderCreatePage";
 
 export const router = createBrowserRouter([
     { path: '/', Component: App, children: [
@@ -26,6 +29,9 @@ export const router = createBrowserRouter([
         {path:'suppliers', Component: SuppliersPage },
         {path:'suppliers/:id', Component: SupplierDetailPage },
         {path:'suppliers/create', Component: SupplierCreatePage },
+        { path: 'sales', Component: SalesOrderLinePage },
+        { path: 'sales/:id', Component: SalesOrderLinePageDetails },
+        { path: 'sales/create', Component: SalesOrderCreatePage },
         {path:'*', Component: NotFoundPage },
     ] },
     {path:'*', Component: NotFoundPage }
