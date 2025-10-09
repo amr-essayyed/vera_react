@@ -9,6 +9,7 @@ import LoadingSubPage from "@/components/LoadingSubPage";
 import type { tPurchaseOrder, tPurchaseOrderLine } from "@/types/purchaseOrder";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ResourceService } from "@/services/resourceService";
+import { useAllResource } from "@/hooks/useResource";
 
 export default function PurchaseOrderDetailPage() {
 	const params = useParams();
@@ -38,6 +39,8 @@ export default function PurchaseOrderDetailPage() {
 		queryFn: async () => await ResourceService.getAll("purchaseOrderLine", [["order_id", "=", purchaseOrder?.id]]),
 		enabled: !!purchaseOrder?.order_line && purchaseOrder.order_line.length > 0,
 	});
+
+    const userState = useAllResource("user");
 
 	// Get vendor name
 	const { vendorName } = useVendorName(purchaseOrder?.partner_id);
@@ -373,7 +376,8 @@ export default function PurchaseOrderDetailPage() {
 						<CardContent>
 							<div className="space-y-4">
 								<div className="border-l-2 border-blue-500 pl-4 py-2">
-									<div className="font-medium">Purchase Order Created</div>
+									{/* <div className="font-medium">Purchase Order Created by {purchaseOrder.user_id && purchaseOrder.user_id[1]}</div> */}
+									<div className="font-medium">Purchase Order {purchaseOrder.id} Created by { Array.isArray(purchaseOrder.user_id)? purchaseOrder.user_id[1] : purchaseOrder.user_id}</div>
 									<div className="text-sm text-gray-600">Purchase order was created for vendor: {vendorName}</div>
 									<div className="text-xs text-gray-500 mt-1">{formatDate(purchaseOrder.date_order)}</div>
 								</div>

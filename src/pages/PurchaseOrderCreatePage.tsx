@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAllResource, useCreateMultipleResources, useCreateResource } from "@/hooks/useResource";
+import { useAllResource, useCreateResource } from "@/hooks/useResource";
 import ItemsTable from "@/components/ItemsTable";
 import { purchaseOrderFormSchema, purchaseOrderLineFormSchema, type tPurchaseOrderForm, type tPurchaseOrderLineForm } from "@/types/purchaseOrder";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,9 +37,9 @@ export default function PurchaseOrderCreatePage() {
 	const { data: products, isLoading: isProductsLoading, error: productsError } = useAllResource("product");
 
 	// Additional data for form fields
-	// const { data: currencies, isLoading: isCurrenciesLoading, error: currenciesError } = useAllResource("currency");
+	const currencyState = useAllResource("currency");
 	// const { data: companies, isLoading: isCompaniesLoading, error: companiesError } = useAllResource("company");
-	// const { data: users, isLoading: isUsersLoading, error: usersError } = useAllResource("user");
+	const userState = useAllResource("user");
 	// const { data: pickingTypes, isLoading: isPickingTypesLoading, error: pickingTypesError } = useAllResource("pickingType");
 	// const { data: paymentTerms, isLoading: isPaymentTermsLoading, error: paymentTermsError } = useAllResource("paymentTerm");
 	// const { data: fiscalPositions, isLoading: isFiscalPositionsLoading, error: fiscalPositionsError } = useAllResource("fiscalPosition");
@@ -101,8 +101,8 @@ export default function PurchaseOrderCreatePage() {
         }
     }
 
-	const isLoading = isProductsLoading || contactState.isLoading //|| isCompaniesLoading || isUsersLoading || isCurrenciesLoading || isProjectsLoading || isPickingTypesLoading || isPaymentTermsLoading || isFiscalPositionsLoading || isIncotermsLoading;
-	const hasErrors = productsError || contactState.error //|| currenciesError //|| companiesError || usersError || projectsError || pickingTypesError || paymentTermsError || fiscalPositionsError || incotermsError;
+	const isLoading = isProductsLoading || contactState.isLoading //|| isCompaniesLoading || isUsersLoading || isCurrenciesLoading || isPickingTypesLoading || isPaymentTermsLoading || isFiscalPositionsLoading || isIncotermsLoading;
+	const hasErrors = productsError || contactState.error //|| currenciesError //|| companiesError || usersError || pickingTypesError || paymentTermsError || fiscalPositionsError || incotermsError;
 
 	// Handle supplier creation
 	const handleSupplierCreated = (newSupplier: any) => {
@@ -148,10 +148,9 @@ export default function PurchaseOrderCreatePage() {
 						<AlertDescription>
 							{productsError && `Error loading products: ${productsError.message}. `}
 							{contactState.error && `Error loading contacts: ${contactState.error.message}. `}
-							{/* {customerState.error && `Error loading customers: ${customerState.error.message}. `} */}
 							{/* {companiesError && `Error loading companies: ${companiesError.message}. `} */}
-							{/* {usersError && `Error loading users: ${usersError.message}. `} */}
-							{/* {currenciesError && `Error loading currencies: ${currenciesError.message}. `} */}
+							{userState.error && `Error loading users: ${userState.error.message}. `}
+							{currencyState.error && `Error loading currencies: ${currencyState.error.message}. `}
 							{/* {projectsError && `Error loading projects: ${projectsError.message}. `} */}
 							{/* {pickingTypesError && `Error loading picking types: ${pickingTypesError.message}. `} */}
 							{/* {paymentTermsError && `Error loading payment terms: ${paymentTermsError.message}. `} */}
@@ -205,19 +204,6 @@ export default function PurchaseOrderCreatePage() {
                                     />
 								</div>
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									{/* <FormField
-										control={form.control}
-										name="date_order"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Order Date</Label>
-												<FormControl>
-													<Input {...field} type="date" />
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/> */}
                                     {/* Depects the date within which the Quotoation should be confirmed and covnerted to a purchase order */}
                                     {/* <AppInputFormField
                                         formControl={form.control}
@@ -298,6 +284,12 @@ export default function PurchaseOrderCreatePage() {
 											</FormItem>
 										)}
 									/> */}
+                                    <AppSelectFormField
+                                        formControl={purchaseOrderForm.control}
+                                        name="user_id"
+                                        label="Responsible User"
+                                        resourceState={userState}
+                                    />
 								</div>
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									{/* <FormField

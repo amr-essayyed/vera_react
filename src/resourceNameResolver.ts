@@ -98,26 +98,12 @@ const resourceNameResolver: { [key: string]: { modelName: string; fields: {} } }
             ],
 		},
 	},
+    user: {
+		modelName: "res.users",
+		fields: {
+			fields: ["id", "name", "email", "phone", "mobile", "website", "street", "street2", "city", "state_id", "zip", "country_id", "vat", "is_company", "supplier_rank", "customer_rank", "category_id", "comment", "avatar_1024"],
+		},
+	},
 };
 
 export default resourceNameResolver;
-
-
-                // "id", 
-                // "name", 
-                // "partner_ref", 
-                // "customer_id", 
-                // "order_status", 
-                // "shipping_status", 
-                // "payment_status", 
-                // "date_approve", 
-                // "project_id", 
-                // "date_planned", 
-                // "date_order",
-                // "partner_id" , // ref res.partner (supplier)
-                // "currency_id", // ref res.currency
-                // "amount_total",
-                // "order_line", // ref purchase.order.line
-                // "invoice_ids", // ref account.move
-                // "invoice_count",
-                // "invoice_status" // select

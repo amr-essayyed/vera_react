@@ -55,11 +55,6 @@ const data = {
             url: "suppliers",
             icon: Container,
         },
-        {
-            title: "posts",
-            url: "posts",
-            icon: Signpost
-        },
     ],
     navSecondary: [
         {
