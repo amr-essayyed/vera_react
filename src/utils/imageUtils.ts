@@ -2,8 +2,10 @@
  * Utility functions for handling Odoo images
  */
 
+import { BASE_URL } from "@/services/apiClient";
+
 // Get the base URL for Odoo - using the same base as API but without /api
-const ODOO_BASE_URL = "http://localhost:3001"; // Adjust this to your Odoo server URL
+const ODOO_BASE_URL = BASE_URL; // Adjust this to your Odoo server URL
 
 /**
  * Generate image URL for Odoo records
