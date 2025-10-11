@@ -7,9 +7,9 @@
 
 import type { ApiResponse } from "../types/apiResponse";
 
-// const   BASE_URL = "https://jsonplaceholder.typicode.com/";
+// export const   BASE_URL = "https://jsonplaceholder.typicode.com/";
 // export const   BASE_URL = "http://154.26.136.133:10025/";
-const   BASE_URL = "http://localhost:3001/api/";
+export const   BASE_URL = "http://localhost:3001/api/";
 
 async function apiClient
 (
