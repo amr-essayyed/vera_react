@@ -202,39 +202,7 @@ export default function PurchaseOrderCreatePage() {
                                         label="customer"
                                         resourceState={contactState}
                                     />
-								</div>
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Depects the date within which the Quotoation should be confirmed and covnerted to a purchase order */}
-                                    {/* <AppInputFormField
-                                        formControl={form.control}
-                                        name="date_order"
-                                        label="Order Deadline"
-                                        type='date'
-                                    /> */}
-                                    <AppInputFormField
-                                        formControl={purchaseOrderForm.control}
-                                        name="date_planned"
-                                        label="Expected Delivery Date"
-                                        type="datetime-local"
-                                    />
-								</div>
-								<AppInputFormField
-                                    formControl={purchaseOrderForm.control}
-                                    name="partner_ref"
-                                    label="Supplier Reference"
-                                    type="text"  
-                                />
-							</CardContent>
-						</Card>
-
-						{/* Business Settings */}
-						<Card>
-							<CardHeader>
-								<CardTitle>Business Settings</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-4">
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									{/* <FormField
+                                    {/* <FormField
 										control={form.control}
 										name="company_id"
 										render={({ field }) => (
@@ -292,7 +260,27 @@ export default function PurchaseOrderCreatePage() {
                                     />
 								</div>
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									{/* <FormField
+                                    {/* Depects the date within which the Quotoation should be confirmed and covnerted to a purchase order */}
+                                    {/* <AppInputFormField
+                                        formControl={form.control}
+                                        name="date_order"
+                                        label="Order Deadline"
+                                        type='date'
+                                    /> */}
+                                    <AppInputFormField
+                                        formControl={purchaseOrderForm.control}
+                                        name="date_planned"
+                                        label="Expected Delivery Date"
+                                        type="datetime-local"
+                                    />
+								</div>
+								<AppInputFormField
+                                    formControl={purchaseOrderForm.control}
+                                    name="partner_ref"
+                                    label="Supplier Reference"
+                                    type="text"  
+                                />
+                                {/* <FormField
 										control={form.control}
 										name="currency_id"
 										render={({ field }) => (
@@ -342,18 +330,7 @@ export default function PurchaseOrderCreatePage() {
 											</FormItem>
 										)}
 									/> */}
-								</div>
-							</CardContent>
-						</Card>
-
-						{/* Logistics & Terms */}
-						<Card>
-							<CardHeader>
-								<CardTitle>Logistics & Terms</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-4">
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									{/* <FormField
+                                    {/* <FormField
 										control={form.control}
 										name="picking_type_id"
 										render={({ field }) => (
@@ -403,9 +380,7 @@ export default function PurchaseOrderCreatePage() {
 											</FormItem>
 										)}
 									/> */}
-								</div>
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									{/* <FormField
+                                    {/* <FormField
 										control={form.control}
 										name="fiscal_position_id"
 										render={({ field }) => (
@@ -455,18 +430,7 @@ export default function PurchaseOrderCreatePage() {
 											</FormItem>
 										)}
 									/> */}
-								</div>
-							</CardContent>
-						</Card>
-
-						{/* Status Fields */}
-						<Card>
-							<CardHeader>
-								<CardTitle>Status Information</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-4">
-								<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-									<FormField
+                                    <FormField
 										control={purchaseOrderForm.control}
 										name="order_status"
 										render={({ field }) => (
@@ -515,9 +479,7 @@ export default function PurchaseOrderCreatePage() {
 											</FormItem>
 										)}
 									/> */}
-								</div>
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									{/* <FormField
+                                    {/* <FormField
 										control={form.control}
 										name="invoice_status"
 										render={({ field }) => (
@@ -553,17 +515,7 @@ export default function PurchaseOrderCreatePage() {
 											</FormItem>
 										)}
 									/> */}
-								</div>
-							</CardContent>
-						</Card>
-
-						{/* Additional Information */}
-						<Card>
-							<CardHeader>
-								<CardTitle>Additional Information</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<FormField
+                                    <FormField
 									control={purchaseOrderForm.control}
 									name="notes"
 									render={({ field }) => (
