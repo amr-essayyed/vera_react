@@ -1,34 +1,31 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAllResource, useCreateMultipleResources, useCreateResource } from "@/hooks/useResource";
+import { useAllResource, useCreateResource } from "@/hooks/useResource";
 import ItemsTable from "@/components/ItemsTable";
-import { many2oneSchema, purchaseOrderFormSchema, purchaseOrderLineFormSchema, type tPurchaseOrderForm, type tPurchaseOrderLineForm } from "@/types/purchaseOrder";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { purchaseOrderFormSchema, purchaseOrderLineFormSchema, type tPurchaseOrderForm, type tPurchaseOrderLineForm } from "@/types/purchaseOrder";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { ArrowLeft, ShoppingCart, Save, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import SupplierCreateDialog from "@/components/SupplierCreateDialog";
 import { toast } from "sonner";
 import AppSelectFormField from "@/components/AppSelectFormField";
-import { imageToBase64 } from "@/utils/imageUtils";
 import AppInputFormField from "@/components/AppInputFormField";
 import type z from "zod";
 import { normalizeDateFields } from "@/utils/dateUtils";
+import { useOrderLine } from "@/hooks/useOrderLines";
+import type { many2oneSchema } from "@/types/odooSchemas";
 
 export default function PurchaseOrderCreatePage() {
 	const navigate = useNavigate();
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const { mutateAsync: mutatePurchaseOrder } = useCreateResource("purchaseOrder");
-	const { mutateAsync: mutatePurchaseOrderLine } = useCreateMultipleResources("purchaseOrderLine");
-	const { mutateAsync: mutateProduct } = useCreateMultipleResources("product");
+
+    const { onOrderLineFormSubmit } = useOrderLine('purchaseOrderLine')
 
 	// use query: getAll suppliers and products
 	// const { data: suppliers, isLoading: isSuppliersLoading, error: suppliersError } = useAllResource("contact" /* , [["supplier_rank", ">", 0]] */);
@@ -36,10 +33,9 @@ export default function PurchaseOrderCreatePage() {
 	const { data: products, isLoading: isProductsLoading, error: productsError } = useAllResource("product");
 
 	// Additional data for form fields
-	// const { data: currencies, isLoading: isCurrenciesLoading, error: currenciesError } = useAllResource("currency");
+	const currencyState = useAllResource("currency");
 	// const { data: companies, isLoading: isCompaniesLoading, error: companiesError } = useAllResource("company");
-	// const { data: users, isLoading: isUsersLoading, error: usersError } = useAllResource("user");
-	// const { data: projects, isLoading: isProjectsLoading, error: projectsError } = useAllResource("project");
+	const userState = useAllResource("user");
 	// const { data: pickingTypes, isLoading: isPickingTypesLoading, error: pickingTypesError } = useAllResource("pickingType");
 	// const { data: paymentTerms, isLoading: isPaymentTermsLoading, error: paymentTermsError } = useAllResource("paymentTerm");
 	// const { data: fiscalPositions, isLoading: isFiscalPositionsLoading, error: fiscalPositionsError } = useAllResource("fiscalPosition");
@@ -48,7 +44,7 @@ export default function PurchaseOrderCreatePage() {
 	const purchaseOrderForm = useForm({
 		resolver: zodResolver(purchaseOrderFormSchema),
 		defaultValues: {
-			state: "purchase",
+			state: "draft",
 			order_status: "pending",
 		},
 	});
@@ -60,119 +56,49 @@ export default function PurchaseOrderCreatePage() {
     var purchaseOrderIdGlobal: z.infer<typeof many2oneSchema>;
 	// Submit handler
 	const onPurchaseOrderFormSubmit = async (values: tPurchaseOrderForm) => {
-		setIsSubmitting(true);
-		console.log("Form submitted with values:", values);
+        console.log("PO Form values:", values);
 
-		// Check if any data is still loading
-		if (isProductsLoading || contactState.isLoading) {
-			console.error("Data is still loading, please wait...");
-			toast.error("Please wait for all data to load before submitting the form.");
-			setIsSubmitting(false);
-			return;
-		}
+        setIsSubmitting(true);
 
-		// Check if required data failed to load
-		if (!products || !contactState.data) {
-			console.error("Required data failed to load:", { products: !!products, suppliers: !!contactState.data });
-			toast.error("Some required data failed to load. Please refresh the page and try again.");
-			setIsSubmitting(false);
-			return;
-		}
+        const purchaseOrderData = normalizeDateFields(values);
+        // Create PO
+        const createdPurchaseOrder = await mutatePurchaseOrder(purchaseOrderData);
+        // Extract the ID from the response - it might be just the number or in a different property
+        const purchaseOrderId = createdPurchaseOrder.id || createdPurchaseOrder || (typeof createdPurchaseOrder === "number" ? createdPurchaseOrder : null);
 
-		try {
-			// Step 2: Create purchase order first (without order lines)
-			const purchaseOrderData = normalizeDateFields(values);
-
-			console.log("Creating purchase order:", purchaseOrderData);
-			const createdPurchaseOrder = await mutatePurchaseOrder(purchaseOrderData);
-			console.log("Successfully created purchase order!", createdPurchaseOrder);
-
-			// Extract the ID from the response - it might be just the number or in a different property
-			const purchaseOrderId = createdPurchaseOrder.id || createdPurchaseOrder || (typeof createdPurchaseOrder === "number" ? createdPurchaseOrder : null);
-			console.log("Purchase order ID:", purchaseOrderId);
-
-			if (!purchaseOrderId) {
-				throw new Error("Failed to get purchase order ID from response");
-			}
-            purchaseOrderIdGlobal = purchaseOrderId;
-			
-		} catch (error) {
-			console.error("Error in purchase order creation process:", error);
-			toast.error("Failed to create purchase order. Please try again.");
-		}
-	};
-
-    async function onPurchaseOrderLineFormSubmit(values: tPurchaseOrderLineForm, purchaseOrderId: z.infer<typeof many2oneSchema>) {
-        // Filter out empty lines (lines without product names)
-        const validOrderLines = (values.order_lines || []).filter((line) => line.name && line.name.trim().length > 0);
-
-        // Process all order lines and convert images to base64
-        const newProducts = validOrderLines.filter((product) => !products?.some((p: any) => p.name === product.name));
-        console.log("newProducts:", newProducts);
-
-        const productsToCreate = await Promise.all(
-            newProducts.map(async (line) => {
-                const imageBase64 = line.image ? await imageToBase64(line.image) : null;
-
-                // Build the product object
-                const product: any = {
-                    name: line.name,
-                    list_price: line.price_unit,
-                    image_1920: imageBase64,
-                };
-
-                return product;
-            })
-        );
-        console.log("Creating products:", productsToCreate);
-
-        // Step 1: Create all products first
-        const createdProducts = await mutateProduct(productsToCreate);
-        console.log(`Successfully created ${productsToCreate.length} products!`, createdProducts);
-
-        // Step 3: Create purchase order lines with purchase order and product references
-			const purchaseOrderLinesToCreate = validOrderLines.map((line, index) => ({
-            order_id: purchaseOrderId, // Reference to purchase order
-            product_id: createdProducts[index]?.id, // Reference to created product
-            product_qty: line.product_qty, // Using product_qty field
-            price_unit: line.price_unit,
-            name: line.name,
-        }));
-
-        console.log("Purchase order lines to create:", JSON.stringify(purchaseOrderLinesToCreate, null, 2));
-
-        // Only create purchase order lines if there are valid lines
-        if (purchaseOrderLinesToCreate.length > 0) {
-            console.log("Creating purchase order lines:", purchaseOrderLinesToCreate);
-            const createdPurchaseOrderLines = await mutatePurchaseOrderLine(purchaseOrderLinesToCreate);
-            console.log("Successfully created purchase order lines!", createdPurchaseOrderLines);
-        } else {
-            console.log("No order lines to create - purchase order created without items");
+        if (!purchaseOrderId) {
+            throw new Error("Failed to get purchase order ID from response");
         }
-
-        // Show success message and navigate
-        toast.success("Purchase order created successfully!");
-        navigate("/purchase-orders");
-    }
+        purchaseOrderIdGlobal = purchaseOrderId;
+	};
 
     async function handleSaveForms() {
         console.log('handle Save forms');
         
         try {
-        // Trigger form submission for both forms
-        await purchaseOrderForm.handleSubmit(onPurchaseOrderFormSubmit)();
+            const isPurchaseOrderValid = await purchaseOrderForm.trigger();
+            const isPurchaseOrderLineValid = await purchaseOrderLineForm.trigger();
+            
+            if (!isPurchaseOrderValid || !isPurchaseOrderLineValid) {
+                toast.error("Fix fields before submitting")
+                throw new Error("Validation Erro");
+            }
 
-        purchaseOrderLineForm.handleSubmit((values) => {console.log("values: ", values); return onPurchaseOrderLineFormSubmit(values, purchaseOrderIdGlobal)})();
+            // Trigger form submission for both forms
+            await purchaseOrderForm.handleSubmit(onPurchaseOrderFormSubmit)();
+            await purchaseOrderLineForm.handleSubmit((values) => onOrderLineFormSubmit(values, purchaseOrderIdGlobal, products))();
+
+            toast.success("Purchase order created successfully!");
+            navigate("/purchase-orders");
         } catch (error) {
-            console.error("Error in handleSaveForms:", error);
             toast.error("Failed to save forms. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
     }
 
-	const isLoading = isProductsLoading || contactState.isLoading //|| isCompaniesLoading || isUsersLoading || isCurrenciesLoading || isProjectsLoading || isPickingTypesLoading || isPaymentTermsLoading || isFiscalPositionsLoading || isIncotermsLoading;
-	const hasErrors = productsError || contactState.error //|| currenciesError //|| companiesError || usersError || projectsError || pickingTypesError || paymentTermsError || fiscalPositionsError || incotermsError;
+	const isLoading = isProductsLoading || contactState.isLoading //|| isCompaniesLoading || isUsersLoading || isCurrenciesLoading || isPickingTypesLoading || isPaymentTermsLoading || isFiscalPositionsLoading || isIncotermsLoading;
+	const hasErrors = productsError || contactState.error //|| currenciesError //|| companiesError || usersError || pickingTypesError || paymentTermsError || fiscalPositionsError || incotermsError;
 
 	// Handle supplier creation
 	const handleSupplierCreated = (newSupplier: any) => {
@@ -181,29 +107,6 @@ export default function PurchaseOrderCreatePage() {
 		purchaseOrderForm.setValue("partner_id", supplierId);
 		console.log("New supplier created:", newSupplier);
 	};
-
-	// Check if form has been modified
-	const POformValues = purchaseOrderForm.watch();
-	const POLineformValues = purchaseOrderLineForm.watch();
-	const hasUnsavedChanges =
-		POformValues.partner_id ||
-		// || formValues.partner_ref
-		POformValues.notes ||
-		(POLineformValues.order_lines || []).some((line) => line.name || (line.product_qty || 0) > 1 || (line.price_unit || 0) > 0);
-
-	// Warn before leaving if there are unsaved changes
-	useEffect(() => {
-		const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-			if (hasUnsavedChanges && !isSubmitting) {
-				e.preventDefault();
-				// Modern browsers ignore the returnValue, but we set it for compatibility
-				return (e.returnValue = "You have unsaved changes. Are you sure you want to leave?");
-			}
-		};
-
-		window.addEventListener("beforeunload", handleBeforeUnload);
-		return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-	}, [hasUnsavedChanges, isSubmitting]);
 
 	return (
 		<div className="min-h-screen bg-gray-50 dark:bg-black">
@@ -234,16 +137,16 @@ export default function PurchaseOrderCreatePage() {
 
 			{/* Error and Loading States */}
 			<div className="max-w-6xl mx-auto px-4 py-4">
-				{hasErrors && (
+				{/* debuging only */}
+                {hasErrors && (
 					<Alert className="mb-4" variant="destructive">
 						<AlertCircle className="h-4 w-4" />
 						<AlertDescription>
 							{productsError && `Error loading products: ${productsError.message}. `}
 							{contactState.error && `Error loading contacts: ${contactState.error.message}. `}
-							{/* {customerState.error && `Error loading customers: ${customerState.error.message}. `} */}
 							{/* {companiesError && `Error loading companies: ${companiesError.message}. `} */}
-							{/* {usersError && `Error loading users: ${usersError.message}. `} */}
-							{/* {currenciesError && `Error loading currencies: ${currenciesError.message}. `} */}
+							{userState.error && `Error loading users: ${userState.error.message}. `}
+							{currencyState.error && `Error loading currencies: ${currencyState.error.message}. `}
 							{/* {projectsError && `Error loading projects: ${projectsError.message}. `} */}
 							{/* {pickingTypesError && `Error loading picking types: ${pickingTypesError.message}. `} */}
 							{/* {paymentTermsError && `Error loading payment terms: ${paymentTermsError.message}. `} */}
@@ -265,14 +168,6 @@ export default function PurchaseOrderCreatePage() {
 			<div className="max-w-6xl mx-auto px-4 pb-6">
 				<Form {...purchaseOrderForm}>
 					{/* Field Information Alert */}
-					<Alert className="mb-4">
-						<AlertCircle className="h-4 w-4" />
-						<AlertDescription>
-							<strong>Required:</strong> Supplier selection.
-							<strong>Optional:</strong> All other fields are optional and will use system defaults if not specified.
-							<strong>Auto-calculated:</strong> PO number, totals, taxes calculated by Odoo.
-						</AlertDescription>
-					</Alert>
 
 					<form onSubmit={purchaseOrderForm.handleSubmit(onPurchaseOrderFormSubmit)} className="space-y-6">
 						{/* Order Information */}
@@ -295,21 +190,20 @@ export default function PurchaseOrderCreatePage() {
                                         label="customer"
                                         resourceState={contactState}
                                     />
-								</div>
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									{/* <FormField
-										control={form.control}
-										name="date_order"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Order Date</Label>
-												<FormControl>
-													<Input {...field} type="date" />
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/> */}
+                                    {/* <AppSelectFormField
+                                        formControl={purchaseOrderForm.control}
+                                        name="company_id"
+                                        label="Company"
+                                        resourceState={companyState}
+                                    />
+                                    <AppSelectFormField
+                                        formControl={purchaseOrderForm.control}
+                                        name="user_id"
+                                        label="Responsible User"
+                                        resourceState={userState}
+                                    />
+                                    */}
+
                                     {/* Depects the date within which the Quotoation should be confirmed and covnerted to a purchase order */}
                                     {/* <AppInputFormField
                                         formControl={form.control}
@@ -323,372 +217,91 @@ export default function PurchaseOrderCreatePage() {
                                         label="Expected Delivery Date"
                                         type="datetime-local"
                                     />
-								</div>
-								{/* <AppInputFormField
-                                    formControl={purchaseOrderForm.control}
-                                    name="partner_ref"
-                                    label="Supplier Reference"
-                                    
-                                /> */}
-                                {/* <FormField
-									control={form.control}
-									name="partner_ref"
-									render={({ field }) => (
-										<FormItem>
-											<Label>Supplier Reference</Label>
-											<FormControl>
-												<Input {...field} placeholder="Enter supplier reference (optional)" />
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/> */}
-							</CardContent>
-						</Card>
-
-						{/* Business Settings */}
-						<Card>
-							<CardHeader>
-								<CardTitle>Business Settings</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-4">
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									{/* <FormField
-										control={form.control}
-										name="company_id"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Company</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""} disabled={isCompaniesLoading}>
-														<SelectTrigger>
-															<SelectValue placeholder={isCompaniesLoading ? "Loading companies..." : "Select Company (Optional)"} />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="default">Default Company</SelectItem>
-															{companies?.map((company: any) => (
-																<SelectItem key={company.id} value={String(company.id)}>
-																	{company.name}
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="user_id"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Responsible User</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""} disabled={isUsersLoading}>
-														<SelectTrigger>
-															<SelectValue placeholder={isUsersLoading ? "Loading users..." : "Select User (Optional)"} />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="current">Current User</SelectItem>
-															{users?.map((user: any) => (
-																<SelectItem key={user.id} value={String(user.id)}>
-																	{user.name}
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/> */}
-								</div>
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									{/* <FormField
-										control={form.control}
-										name="currency_id"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Currency</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""} disabled={isCurrenciesLoading}>
-														<SelectTrigger>
-															<SelectValue placeholder={isCurrenciesLoading ? "Loading currencies..." : "Select Currency (Optional)"} />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="default">Default Currency</SelectItem>
-															{currencies?.map((currency: any) => (
-																<SelectItem key={currency.id} value={String(currency.id)}>
-																	{currency.name} ({currency.symbol || currency.name})
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="project_id"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Project</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""} disabled={isProjectsLoading}>
-														<SelectTrigger>
-															<SelectValue placeholder={isProjectsLoading ? "Loading projects..." : "Select Project (Optional)"} />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="none">No Project</SelectItem>
-															{projects?.map((project: any) => (
-																<SelectItem key={project.id} value={String(project.id)}>
-																	{project.name}
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/> */}
-								</div>
-							</CardContent>
-						</Card>
-
-						{/* Logistics & Terms */}
-						<Card>
-							<CardHeader>
-								<CardTitle>Logistics & Terms</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-4">
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									{/* <FormField
-										control={form.control}
-										name="picking_type_id"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Picking Type</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""} disabled={isPickingTypesLoading}>
-														<SelectTrigger>
-															<SelectValue placeholder={isPickingTypesLoading ? "Loading picking types..." : "Select Picking Type (Optional)"} />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="default">Default Picking Type</SelectItem>
-															{pickingTypes?.map((pickingType: any) => (
-																<SelectItem key={pickingType.id} value={String(pickingType.id)}>
-																	{pickingType.name}
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="payment_term_id"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Payment Terms</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""} disabled={isPaymentTermsLoading}>
-														<SelectTrigger>
-															<SelectValue placeholder={isPaymentTermsLoading ? "Loading payment terms..." : "Select Payment Terms (Optional)"} />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="default">Default Payment Terms</SelectItem>
-															{paymentTerms?.map((paymentTerm: any) => (
-																<SelectItem key={paymentTerm.id} value={String(paymentTerm.id)}>
-																	{paymentTerm.name}
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/> */}
-								</div>
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									{/* <FormField
-										control={form.control}
-										name="fiscal_position_id"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Fiscal Position</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""} disabled={isFiscalPositionsLoading}>
-														<SelectTrigger>
-															<SelectValue placeholder={isFiscalPositionsLoading ? "Loading fiscal positions..." : "Select Fiscal Position (Optional)"} />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="default">Default Fiscal Position</SelectItem>
-															{fiscalPositions?.map((fiscalPosition: any) => (
-																<SelectItem key={fiscalPosition.id} value={String(fiscalPosition.id)}>
-																	{fiscalPosition.name}
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="incoterm_id"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Incoterm</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""} disabled={isIncotermsLoading}>
-														<SelectTrigger>
-															<SelectValue placeholder={isIncotermsLoading ? "Loading incoterms..." : "Select Incoterm (Optional)"} />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="none">No Incoterm</SelectItem>
-															{incoterms?.map((incoterm: any) => (
-																<SelectItem key={incoterm.id} value={String(incoterm.id)}>
-																	{incoterm.name} - {incoterm.code}
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/> */}
-								</div>
-							</CardContent>
-						</Card>
-
-						{/* Status Fields */}
-						<Card>
-							<CardHeader>
-								<CardTitle>Status Information</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-4">
-								<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-									<FormField
-										control={purchaseOrderForm.control}
-										name="order_status"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Order Status</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""}>
-														<SelectTrigger>
-															<SelectValue placeholder="Select Order Status (Optional)" />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="pending">pending</SelectItem>
-															<SelectItem value="processing">processing</SelectItem>
-															<SelectItem value="shipped">shipped</SelectItem>
-															<SelectItem value="delivered">delivered</SelectItem>
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									{/* <FormField
-										control={form.control}
-										name="shipping_status"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Shipping Status</Label>
-												<FormControl>
-													<Input {...field} placeholder="Shipping status (optional)" />
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="payment_status"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Payment Status</Label>
-												<FormControl>
-													<Input {...field} placeholder="Payment status (optional)" />
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/> */}
-								</div>
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									{/* <FormField
-										control={form.control}
-										name="invoice_status"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Invoice Status</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""}>
-														<SelectTrigger>
-															<SelectValue placeholder="Select Invoice Status (Optional)" />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="default">Default</SelectItem>
-															<SelectItem value="no">Nothing to Invoice</SelectItem>
-															<SelectItem value="to invoice">To Invoice</SelectItem>
-															<SelectItem value="invoiced">Fully Invoiced</SelectItem>
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="date_approve"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Approval Date</Label>
-												<FormControl>
-													<Input {...field} type="date" />
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/> */}
-								</div>
-							</CardContent>
-						</Card>
-
-						{/* Additional Information */}
-						<Card>
-							<CardHeader>
-								<CardTitle>Additional Information</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<FormField
-									control={purchaseOrderForm.control}
-									name="notes"
-									render={({ field }) => (
-										<FormItem>
-											<Label>Notes & Terms</Label>
-											<FormControl>
-												<Textarea {...field} placeholder="Enter any notes, terms, or special instructions..." rows={4} />
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+								
+                                    <AppInputFormField
+                                        formControl={purchaseOrderForm.control}
+                                        name="partner_ref"
+                                        label="Supplier Reference"
+                                        type="text"  
+                                    />
+                                    <AppSelectFormField
+                                        formControl={purchaseOrderForm.control}
+                                        name="currency_id"
+                                        label="Currency"
+                                        resourceState={currencyState}
+                                    />
+                                    {/* <AppSelectFormField
+                                        formControl={form.control}
+                                        name="picking_type_id"
+                                        label="Picking Type"
+                                        resourceState={pickingTypeState}
+                                    /> */}
+                                    {/* <AppSelectFormField
+                                        formControl={form.control}
+                                        name="payment_term_id"
+                                        label="Payment Terms"
+                                        resourceState={paymentTermState}
+                                    /> */}
+                                    {/* <AppSelectFormField
+                                        formControl={form.control}
+                                        name="fiscal_position_id"
+                                        label="Fiscal Position"
+                                        resourceState={fiscalPositionState}
+                                    /> */}
+                                    {/* <AppSelectFormField
+                                        formControl={form.control}
+                                        name="incoterm_id"
+                                        label="Incoterms"
+                                        resourceState={incotermState}
+                                    /> */}
+                                        <AppSelectFormField
+                                            formControl={purchaseOrderForm.control}
+                                            name="order_status"
+                                            label="Order Status"
+                                            options={[
+                                                ["pending", "Pending"],
+                                                ["processing", "Processing"],
+                                                ["shipped", "Shipped"],
+                                                ["delivered", "Delivered"],
+                                            ]}
+                                        />
+                                        {/* <FormField
+                                            control={form.control}
+                                            name="shipping_status"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <Label>Shipping Status</Label>
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="Shipping status (optional)" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="payment_status"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <Label>Payment Status</Label>
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="Payment status (optional)" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        /> */}
+                                        <AppSelectFormField
+                                            formControl={purchaseOrderForm.control}
+                                            name="invoice_status"
+                                            label="Invoice Status"
+                                            options={[
+                                                ["no", "Nothing to Invoice"], 
+                                                ["to invoice", "To Invoice"], 
+                                                ["invoiced", "Fully Invoiced"]
+                                            ]}
+                                        />
+                                    </div>
 							</CardContent>
 						</Card>
 

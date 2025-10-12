@@ -41,6 +41,11 @@ const data = {
       icon: Box,
     },
     {
+      title: "Sales",
+      url: "sales",
+      icon: Percent,
+    },
+    {
       title: "Customers",
       url: "customers",
       icon: UsersRound,
@@ -54,16 +59,6 @@ const data = {
       title: "Suppliers",
       url: "suppliers",
       icon: Container,
-    },
-    {
-      title: "posts",
-      url: "posts",
-      icon: Signpost
-    },
-    {
-      title: "Sales",
-      url: "sales",
-      icon: Percent,
     },
   ],
   navSecondary: [
