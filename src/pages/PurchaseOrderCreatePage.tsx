@@ -172,14 +172,6 @@ export default function PurchaseOrderCreatePage() {
 			<div className="max-w-6xl mx-auto px-4 pb-6">
 				<Form {...purchaseOrderForm}>
 					{/* Field Information Alert */}
-					<Alert className="mb-4">
-						<AlertCircle className="h-4 w-4" />
-						<AlertDescription>
-							<strong>Required:</strong> Supplier selection.
-							<strong>Optional:</strong> All other fields are optional and will use system defaults if not specified.
-							<strong>Auto-calculated:</strong> PO number, totals, taxes calculated by Odoo.
-						</AlertDescription>
-					</Alert>
 
 					<form onSubmit={purchaseOrderForm.handleSubmit(onPurchaseOrderFormSubmit)} className="space-y-6">
 						{/* Order Information */}
@@ -202,64 +194,20 @@ export default function PurchaseOrderCreatePage() {
                                         label="customer"
                                         resourceState={contactState}
                                     />
-                                    {/* <FormField
-										control={form.control}
-										name="company_id"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Company</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""} disabled={isCompaniesLoading}>
-														<SelectTrigger>
-															<SelectValue placeholder={isCompaniesLoading ? "Loading companies..." : "Select Company (Optional)"} />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="default">Default Company</SelectItem>
-															{companies?.map((company: any) => (
-																<SelectItem key={company.id} value={String(company.id)}>
-																	{company.name}
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="user_id"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Responsible User</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""} disabled={isUsersLoading}>
-														<SelectTrigger>
-															<SelectValue placeholder={isUsersLoading ? "Loading users..." : "Select User (Optional)"} />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="current">Current User</SelectItem>
-															{users?.map((user: any) => (
-																<SelectItem key={user.id} value={String(user.id)}>
-																	{user.name}
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/> */}
+                                    {/* <AppSelectFormField
+                                        formControl={purchaseOrderForm.control}
+                                        name="company_id"
+                                        label="Company"
+                                        resourceState={companyState}
+                                    />
                                     <AppSelectFormField
                                         formControl={purchaseOrderForm.control}
                                         name="user_id"
                                         label="Responsible User"
                                         resourceState={userState}
                                     />
-								</div>
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    */}
+
                                     {/* Depects the date within which the Quotoation should be confirmed and covnerted to a purchase order */}
                                     {/* <AppInputFormField
                                         formControl={form.control}
@@ -273,261 +221,92 @@ export default function PurchaseOrderCreatePage() {
                                         label="Expected Delivery Date"
                                         type="datetime-local"
                                     />
-								</div>
-								<AppInputFormField
-                                    formControl={purchaseOrderForm.control}
-                                    name="partner_ref"
-                                    label="Supplier Reference"
-                                    type="text"  
-                                />
-                                {/* <FormField
-										control={form.control}
-										name="currency_id"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Currency</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""} disabled={isCurrenciesLoading}>
-														<SelectTrigger>
-															<SelectValue placeholder={isCurrenciesLoading ? "Loading currencies..." : "Select Currency (Optional)"} />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="default">Default Currency</SelectItem>
-															{currencies?.map((currency: any) => (
-																<SelectItem key={currency.id} value={String(currency.id)}>
-																	{currency.name} ({currency.symbol || currency.name})
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="project_id"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Project</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""} disabled={isProjectsLoading}>
-														<SelectTrigger>
-															<SelectValue placeholder={isProjectsLoading ? "Loading projects..." : "Select Project (Optional)"} />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="none">No Project</SelectItem>
-															{projects?.map((project: any) => (
-																<SelectItem key={project.id} value={String(project.id)}>
-																	{project.name}
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/> */}
-                                    {/* <FormField
-										control={form.control}
-										name="picking_type_id"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Picking Type</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""} disabled={isPickingTypesLoading}>
-														<SelectTrigger>
-															<SelectValue placeholder={isPickingTypesLoading ? "Loading picking types..." : "Select Picking Type (Optional)"} />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="default">Default Picking Type</SelectItem>
-															{pickingTypes?.map((pickingType: any) => (
-																<SelectItem key={pickingType.id} value={String(pickingType.id)}>
-																	{pickingType.name}
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="payment_term_id"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Payment Terms</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""} disabled={isPaymentTermsLoading}>
-														<SelectTrigger>
-															<SelectValue placeholder={isPaymentTermsLoading ? "Loading payment terms..." : "Select Payment Terms (Optional)"} />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="default">Default Payment Terms</SelectItem>
-															{paymentTerms?.map((paymentTerm: any) => (
-																<SelectItem key={paymentTerm.id} value={String(paymentTerm.id)}>
-																	{paymentTerm.name}
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/> */}
-                                    {/* <FormField
-										control={form.control}
-										name="fiscal_position_id"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Fiscal Position</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""} disabled={isFiscalPositionsLoading}>
-														<SelectTrigger>
-															<SelectValue placeholder={isFiscalPositionsLoading ? "Loading fiscal positions..." : "Select Fiscal Position (Optional)"} />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="default">Default Fiscal Position</SelectItem>
-															{fiscalPositions?.map((fiscalPosition: any) => (
-																<SelectItem key={fiscalPosition.id} value={String(fiscalPosition.id)}>
-																	{fiscalPosition.name}
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="incoterm_id"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Incoterm</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""} disabled={isIncotermsLoading}>
-														<SelectTrigger>
-															<SelectValue placeholder={isIncotermsLoading ? "Loading incoterms..." : "Select Incoterm (Optional)"} />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="none">No Incoterm</SelectItem>
-															{incoterms?.map((incoterm: any) => (
-																<SelectItem key={incoterm.id} value={String(incoterm.id)}>
-																	{incoterm.name} - {incoterm.code}
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/> */}
-                                    <FormField
-										control={purchaseOrderForm.control}
-										name="order_status"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Order Status</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""}>
-														<SelectTrigger>
-															<SelectValue placeholder="Select Order Status (Optional)" />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="pending">pending</SelectItem>
-															<SelectItem value="processing">processing</SelectItem>
-															<SelectItem value="shipped">shipped</SelectItem>
-															<SelectItem value="delivered">delivered</SelectItem>
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									{/* <FormField
-										control={form.control}
-										name="shipping_status"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Shipping Status</Label>
-												<FormControl>
-													<Input {...field} placeholder="Shipping status (optional)" />
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="payment_status"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Payment Status</Label>
-												<FormControl>
-													<Input {...field} placeholder="Payment status (optional)" />
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/> */}
-                                    {/* <FormField
-										control={form.control}
-										name="invoice_status"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Invoice Status</Label>
-												<FormControl>
-													<Select onValueChange={field.onChange} value={field.value || ""}>
-														<SelectTrigger>
-															<SelectValue placeholder="Select Invoice Status (Optional)" />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="default">Default</SelectItem>
-															<SelectItem value="no">Nothing to Invoice</SelectItem>
-															<SelectItem value="to invoice">To Invoice</SelectItem>
-															<SelectItem value="invoiced">Fully Invoiced</SelectItem>
-														</SelectContent>
-													</Select>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="date_approve"
-										render={({ field }) => (
-											<FormItem>
-												<Label>Approval Date</Label>
-												<FormControl>
-													<Input {...field} type="date" />
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/> */}
-                                    <FormField
-									control={purchaseOrderForm.control}
-									name="notes"
-									render={({ field }) => (
-										<FormItem>
-											<Label>Notes & Terms</Label>
-											<FormControl>
-												<Textarea {...field} placeholder="Enter any notes, terms, or special instructions..." rows={4} />
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+								
+                                    <AppInputFormField
+                                        formControl={purchaseOrderForm.control}
+                                        name="partner_ref"
+                                        label="Supplier Reference"
+                                        type="text"  
+                                    />
+                                    <AppSelectFormField
+                                        formControl={purchaseOrderForm.control}
+                                        name="currency_id"
+                                        label="Currency"
+                                        resourceState={currencyState}
+                                    />
+                                    {/* <AppSelectFormField
+                                        formControl={form.control}
+                                        name="picking_type_id"
+                                        label="Picking Type"
+                                        resourceState={pickingTypeState}
+                                    /> */}
+                                    {/* <AppSelectFormField
+                                        formControl={form.control}
+                                        name="payment_term_id"
+                                        label="Payment Terms"
+                                        resourceState={paymentTermState}
+                                    /> */}
+                                    {/* <AppSelectFormField
+                                        formControl={form.control}
+                                        name="fiscal_position_id"
+                                        label="Fiscal Position"
+                                        resourceState={fiscalPositionState}
+                                    /> */}
+                                    {/* <AppSelectFormField
+                                        formControl={form.control}
+                                        name="incoterm_id"
+                                        label="Incoterms"
+                                        resourceState={incotermState}
+                                    /> */}
+                                        <AppSelectFormField
+                                            formControl={purchaseOrderForm.control}
+                                            name="order_status"
+                                            label="Order Status"
+                                            options={[
+                                                ["pending", "Pending"],
+                                                ["processing", "Processing"],
+                                                ["shipped", "Shipped"],
+                                                ["delivered", "Delivered"],
+                                            ]}
+                                        />
+                                        {/* <FormField
+                                            control={form.control}
+                                            name="shipping_status"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <Label>Shipping Status</Label>
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="Shipping status (optional)" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="payment_status"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <Label>Payment Status</Label>
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="Payment status (optional)" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        /> */}
+                                        <AppSelectFormField
+                                            formControl={purchaseOrderForm.control}
+                                            name="invoice_status"
+                                            label="Invoice Status"
+                                            options={[
+                                                ["default", "Default"], 
+                                                ["no", "Nothing to Invoice"], 
+                                                ["to invoice", "To Invoice"], 
+                                                ["invoiced", "Fully Invoiced"]
+                                            ]}
+                                        />
+                                    </div>
 							</CardContent>
 						</Card>
 

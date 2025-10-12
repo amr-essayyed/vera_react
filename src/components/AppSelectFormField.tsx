@@ -9,7 +9,8 @@ interface tProps {
     formControl: any;
     name: string;
     label: string;
-    resourceState: UseQueryResult<[]>;
+    resourceState?: UseQueryResult<[]>;
+    options?: any[];
     createNew?: ReactElement;
 }
 
@@ -18,6 +19,7 @@ export default function AppSelectFormField({
     name,
     label,
     resourceState,
+    options,
     createNew,
 }: tProps) {
     return (
@@ -29,15 +31,20 @@ export default function AppSelectFormField({
                     <Label>{startCase(label)}</Label>
                     <div className="flex gap-2">                    
                         <FormControl>
-                            <Select onValueChange={(val) => field.onChange(JSON.parse(val))} value={field.value ? JSON.stringify(field.value) : ""} disabled={resourceState.isLoading}>
+                            <Select onValueChange={(val) => field.onChange(JSON.parse(val))} value={field.value ? JSON.stringify(field.value) : ""} disabled={resourceState?.isLoading}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder={resourceState.isLoading ? `Loading ${startCase(label)}...` : `Select ${startCase(label)}`} />
+                                    <SelectValue placeholder={resourceState?.isLoading ? `Loading ${startCase(label)}...` : `Select ${startCase(label)}`} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="0">No {startCase(label)}</SelectItem>
-                                    {resourceState.data?.map((resource: any) => (
+                                    {resourceState && <SelectItem value="0">No {startCase(label)}</SelectItem>}
+                                    {resourceState?.data?.map((resource: any) => (
                                         <SelectItem key={resource.id} value={String(resource.id)}>
                                             {resource.name}
+                                        </SelectItem>
+                                    ))}
+                                    {options?.map((option: any) => (
+                                        <SelectItem key={option[0]} value={String(option[0])}>
+                                            {option[1]}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

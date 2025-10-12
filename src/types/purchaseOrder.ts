@@ -140,7 +140,7 @@ export const purchaseOrderFormSchema = purchaseOrderSchema.pick({
     partner_ref: true,
     customer_id: true,
     date_planned: true,
-    notes: true,
+    invoice_status: true,
 })
 // .extend({
 // 	order_line: z.array(purchaseOrderLineFormSchema).optional().default([]),
