@@ -37,15 +37,13 @@ function useResourceByProp<T>(resourceName: string, propName: string, propValue:
 	});
 }
 
-function useCreateResource(resourceName: string) {
+function useCreateResource(resourceName: string, addintionObject = {}) {
 	const queryClient = useQueryClient();
-	// return useMutation<any,Error,ResourceData,unknown>({
+
 	return useMutation<any, Error, any, unknown>({
 		mutationFn: (resourceInstance) => ResourceService.create(resourceName, resourceInstance),
-		onSuccess: (data) => {
-			console.log(data);
-			queryClient.invalidateQueries({ queryKey: [resourceName] });
-		},
+		...addintionObject
+
 	});
 }
 
@@ -89,6 +87,7 @@ function useCreateMultipleResources(resourceName: string) {
 	const queryClient = useQueryClient();
 	return useMutation<any, Error, any[], unknown>({
 		mutationFn: (resourceInstances) => ResourceService.createMultiple(resourceName, resourceInstances),
+
 		onSuccess: (data) => {
 			console.log(data);
 			queryClient.invalidateQueries({ queryKey: [resourceName] });
