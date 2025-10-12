@@ -1,17 +1,13 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAllResource, useCreateResource } from "@/hooks/useResource";
 import ItemsTable from "@/components/ItemsTable";
 import { purchaseOrderFormSchema, purchaseOrderLineFormSchema, type tPurchaseOrderForm, type tPurchaseOrderLineForm } from "@/types/purchaseOrder";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { ArrowLeft, ShoppingCart, Save, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import SupplierCreateDialog from "@/components/SupplierCreateDialog";
@@ -300,7 +296,6 @@ export default function PurchaseOrderCreatePage() {
                                             name="invoice_status"
                                             label="Invoice Status"
                                             options={[
-                                                ["default", "Default"], 
                                                 ["no", "Nothing to Invoice"], 
                                                 ["to invoice", "To Invoice"], 
                                                 ["invoiced", "Fully Invoiced"]

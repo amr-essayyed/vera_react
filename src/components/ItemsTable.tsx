@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
+import { ImageIcon, Upload } from "lucide-react";
 
 export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<any>; isLoading?: boolean }) {
 	/* 
@@ -213,22 +214,41 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 								<FormField
 									control={form.control}
 									name={`order_lines.${index}.image`}
-									render={({ field }) => (
-										<FormItem>
-											<FormControl>
-												<div className="space-y-2">
-													<Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files?.[0])} onBlur={field.onBlur} name={field.name} onFocus={() => handleCellClick(index, 0)} />
-													{selectedCell?.row === index && selectedCell?.col === 0 && <div className="text-xs text-gray-500 mt-1">Click to select file or paste image (Ctrl+V)</div>}
-													{field.value && (
-														<div className="mt-2">
-															<img src={URL.createObjectURL(field.value)} alt="Preview" className="w-16 h-16 object-cover rounded border" />
-														</div>
-													)}
-												</div>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
+									render={({ field }) => {
+										const fileInputRef = useRef<HTMLInputElement>(null);
+										const imageUrl = field.value ? URL.createObjectURL(field.value) : null;
+										return (
+											<FormItem>
+												<FormControl>
+													<div className="space-y-2 bg-contain bg-no-repeat bg-center min-h-[60px] rounded-md" style={imageUrl ? { backgroundImage: `url(${imageUrl})` } : {}}>
+														<Input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files?.[0])} onBlur={field.onBlur} name={field.name} onFocus={() => handleCellClick(index, 0)} className="hidden border-0 focus-visible:ring-0 shadow-none text-sm file:mr-4 file:rounded-md file:border-0 file:bg-primary file:px-4 file:py-2 file:text-white hover:file:bg-primary/80" />
+
+														<Button
+															type="button"
+															variant="ghost"
+															size="sm"
+															onClick={() => {
+																fileInputRef.current?.click();
+																handleCellClick(index, 0);
+															}}
+															className="w-fit h-10 border-dashed border-2 hover:border-primary/50"
+														>
+															<Upload />
+														</Button>
+
+														{selectedCell?.row === index && selectedCell?.col === 0 && <div className="text-xs text-gray-500 mt-1">Ctrl+V</div>}
+
+														{/* {field.value && (
+															<div className="mt-2">
+																<img src={imageUrl!} alt="Preview" className="w-16 h-16 object-cover rounded border" />
+															</div>
+														)} */}
+													</div>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										);
+									}}
 								/>
 							</TableCell>
 							<TableCell onClick={() => handleCellClick(index, 1)} className={selectedCell?.row === index && selectedCell?.col === 1 ? "bg-blue-100" : ""}>
@@ -238,7 +258,7 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 									render={({ field }) => (
 										<FormItem>
 											<FormControl>
-												<Input {...field} placeholder="Enter product name" onFocus={() => handleCellClick(index, 1)} />
+												<Input {...field} placeholder="Enter product name" onFocus={() => handleCellClick(index, 1)} className="border-0 focus-visible:ring-0 shadow-none" />
 											</FormControl>
 											<FormMessage />
 										</FormItem>
@@ -252,7 +272,7 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 									render={({ field }) => (
 										<FormItem>
 											<FormControl>
-												<Input type="number" min="1" {...field} onFocus={() => handleCellClick(index, 2)} onChange={(e) => field.onChange(parseInt(e.target.value) || 1)} placeholder="1" />
+												<Input type="number" min="1" {...field} onFocus={() => handleCellClick(index, 2)} onChange={(e) => field.onChange(parseInt(e.target.value) || 1)} placeholder="1" className="border-0 focus-visible:ring-0 shadow-none" />
 											</FormControl>
 											<FormMessage />
 										</FormItem>
@@ -266,16 +286,14 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 									render={({ field }) => (
 										<FormItem>
 											<FormControl>
-												<Input type="number" step="0.01" min="0" {...field} onFocus={() => handleCellClick(index, 3)} onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} placeholder="0.00" />
+												<Input type="number" step="0.01" min="0" {...field} onFocus={() => handleCellClick(index, 3)} onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} placeholder="0.00" className="border-0 focus-visible:ring-0 shadow-none" />
 											</FormControl>
 											<FormMessage />
 										</FormItem>
 									)}
 								/>
 							</TableCell>
-							<TableCell className="text-right font-medium">
-								${((form.watch(`order_lines.${index}.product_qty`) || 0) * (form.watch(`order_lines.${index}.price_unit`) || 0)).toFixed(2)}
-							</TableCell>
+							<TableCell className="text-right font-medium">${((form.watch(`order_lines.${index}.product_qty`) || 0) * (form.watch(`order_lines.${index}.price_unit`) || 0)).toFixed(2)}</TableCell>
 							<TableCell>
 								<Button type="button" variant="destructive" size="sm" onClick={() => remove(index)}>
 									Delete
@@ -291,9 +309,9 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 					Add Item
 				</Button>
 				{fields.length > 1 && (
-					<Button 
-						type="button" 
-						variant="outline" 
+					<Button
+						type="button"
+						variant="outline"
 						onClick={() => {
 							// Remove all empty rows except the last one
 							const emptyIndices = fields
@@ -304,8 +322,8 @@ export default function ItemsTable({ form, isLoading }: { form: UseFormReturn<an
 								})
 								.map(({ index }) => index)
 								.slice(0, -1); // Keep at least one empty row
-							
-							emptyIndices.reverse().forEach(index => remove(index));
+
+							emptyIndices.reverse().forEach((index) => remove(index));
 						}}
 					>
 						Clear Empty Rows
