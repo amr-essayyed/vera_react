@@ -136,6 +136,50 @@ class JsonRpcResourceService {
         }
     }
 
+    static async createWithChild(resourceName: string, childField: string, resourceInstance: Record<string, unknown>) {
+        const serverResource = resourceNameResolver[resourceName];
+        const body = {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+                "service": "object",
+                "method": "execute_kw",
+                "args": [
+                    "veradb", // database name
+                    2, // user id
+                    "admin",
+                    serverResource.modelName,
+                    "create",
+                    [
+                        {
+                            ...resourceInstance,
+                            [childField]: [(resourceInstance[childField] as unknown[]).map( (childInstance) => (
+                                [
+                                    0,0,
+                                    childInstance
+                                ]
+                            ))]
+                        }
+                    ]
+                ]
+            },
+            "id": 1
+        };
+
+        const response: ApiResponse = await apiClient('jsonrpc', {method: "POST", body: JSON.stringify(body)});
+        
+        if (!response.ok) {
+            console.log("response",response);
+            
+            throw new Error(response.errorMessage as string);
+        } else {
+            if (response.parsedBody.error) {
+                throw new Error(response.parsedBody.error.data.message as string);
+            }
+            return response.parsedBody.result;
+        }
+    }
+
     // R
     static async getAll(resourceName: string, condition?: any[]) { // array of arrays and logic operators ["|", ["prop", "op", "val"], ...]
         const serverResource = resourceNameResolver[resourceName];

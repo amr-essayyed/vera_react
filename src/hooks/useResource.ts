@@ -49,6 +49,18 @@ function useCreateResource(resourceName: string) {
 	});
 }
 
+function useCreateResourceWithChild(resourceName: string, childField: string) {
+	const queryClient = useQueryClient();
+	// return useMutation<any,Error,ResourceData,unknown>({
+	return useMutation<any, Error, any, unknown>({
+		mutationFn: (resourceInstance) => ResourceService.createWithChild(resourceName, childField, resourceInstance),
+		onSuccess: (data) => {
+			console.log(data);
+			queryClient.invalidateQueries({ queryKey: [resourceName] });
+		},
+	});
+}
+
 // function useCreateDependantResource(
 //   resourceName: string,
 //   dependencyResourceName: string
@@ -134,6 +146,7 @@ export {
 	useResourceById,
 	useResourceByProp,
 	useCreateResource,
+    useCreateResourceWithChild,
 	//   useCreateDependantResource,
 	useCreateMultipleResources,
 	//   useCreateMultipleFollowedResources,
