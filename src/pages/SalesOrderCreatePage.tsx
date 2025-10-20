@@ -1,11 +1,10 @@
-import { useFieldArray, useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createSaleOrderLineSchema, createSaleOrderSchema, saleOrderFormSchema, saleOrderLineSchema, type CreateSaleOrder } from "@/types/salesOrder";
+import { formToOdooCreate, saleOrderFormSchema } from "@/types/salesOrder";
 import { useAllResource, useCreateMultipleResources } from "@/hooks/useResource";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import AppSelectFormField from "@/components/AppSelectFormField";
-import AppInputFormField from "@/components/AppInputFormField";
 import PageHeader from "@/components/PageHeader";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
@@ -16,20 +15,21 @@ const SalesOrderCreatePage = () => {
     const [isloading, setLoading] = useState(false);
 
     const form = useForm({
-        resolver: zodResolver(saleOrderFormSchema), // Temporarily commented out for testing
+        resolver: zodResolver(saleOrderFormSchema),
         defaultValues: {
             partner_id: undefined,
             partner_invoice_id: undefined,
             partner_shipping_id: undefined,
             payment_term_id: undefined,
-            order_lines: [{
-                product_id: 0,
+            order_line: [{
+                product_id: undefined,
                 product_uom_qty: 1,
                 price_unit: 0,
                 tax_id: []
             }],
         },
     });
+
     const navigate = useNavigate();
 
     const { control, handleSubmit } = form;
@@ -43,9 +43,10 @@ const SalesOrderCreatePage = () => {
     ]);
     const paymentTerms = useAllResource("accountPaymentTerm");
 
+    // const salesOrderTemplate = useAllResource("saleOrderTemplate");
     const createSalesOrder = useCreateMultipleResources("salesOrder");
 
-    const watchedLines = form.watch("order_lines");
+    const watchedLines = form.watch("order_line");
 
     const calculations = useMemo(() => {
         const unTaxedAmountPrice = watchedLines?.reduce((total: number, line: any) => {
@@ -80,30 +81,15 @@ const SalesOrderCreatePage = () => {
 
     // console.log(calculations());
 
-    const onSubmit = async (data: CreateSaleOrder) => {
+    const onSubmit = async (data: any) => {
         console.log("Form submitted with data:", data);
         console.log("Form errors:", form.formState.errors);
 
-        const payload = {
-            partner_id: Number(data.partner_id) || 0,
-            partner_invoice_id: Number(data.partner_invoice_id) || 0,
-            partner_shipping_id: Number(data.partner_shipping_id) || 0,
-            payment_term_id: Number(data.payment_term_id) || 0,
-            order_line: (data.order_lines ?? []).map((line: any) => [
-                0,
-                0,
-                {
-                    product_id: Number(line.product_id),
-                    product_uom_qty: Number(line.product_uom_qty),
-                    price_unit: Number(line.price_unit),
-                    tax_id: line.tax_ids ? [[6, 0, [Number(line.tax_ids)]]] : [[6, 0, []]]
 
-                },
-            ]),
-            amount_untaxed: Number(calculations.unTaxedAmountPrice),
-            amount_tax: Number(calculations.taxedAmount),
-            amount_total: Number(calculations.totalAmount)
-        };
+        const payload = formToOdooCreate(data);
+        console.log(payload);
+
+
 
         try {
             setLoading(true);
@@ -124,7 +110,7 @@ const SalesOrderCreatePage = () => {
     };
 
     return (
-        <div className="p-2.5">
+        <div className="p-2.5" >
             <PageHeader
                 title="Sales Orders"
                 description="Create your Sales Order here"
@@ -218,7 +204,7 @@ const SalesOrderCreatePage = () => {
                     </div>
                 </form>
             </FormProvider>
-        </div>
+        </div >
     );
 };
 

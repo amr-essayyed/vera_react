@@ -30,12 +30,12 @@ export default function SaleOrderItemsTable({ form, isLoading, productsState, ta
         console.log(productFound);
 
         if (productFound) {
-            form.setValue(`order_lines.${rowIndex}.product_id`, productFound.id);
-            form.setValue(`order_lines.${rowIndex}.price_unit`, productFound.list_price || 0);
+            form.setValue(`order_line.${rowIndex}.product_id`, productFound.id);
+            form.setValue(`order_line.${rowIndex}.price_unit`, productFound.list_price || 0);
         } else {
             console.log("not found");
 
-            form.setValue(`order_lines.${rowIndex}.product_id`, false);
+            form.setValue(`order_line.${rowIndex}.product_id`, false);
 
         }
     }, [form, productsState.data]);
@@ -48,7 +48,7 @@ export default function SaleOrderItemsTable({ form, isLoading, productsState, ta
 
     const { fields, append, remove } = useFieldArray({
         control: form.control,
-        name: "order_lines", // Assuming the array field name is still 'order_lines'
+        name: "order_line", // Assuming the array field name is still 'order_line'
     });
 
     // Helper to parse clipboard data (remains the same)
@@ -78,7 +78,7 @@ export default function SaleOrderItemsTable({ form, isLoading, productsState, ta
                         });
 
                         // Update the form field
-                        form.setValue(`order_lines.${rowIndex}.image`, file as any); // Type assertion for react-hook-form
+                        form.setValue(`order_line.${rowIndex}.image`, file as any); // Type assertion for react-hook-form
                     }
                     break;
                 }
@@ -130,16 +130,16 @@ export default function SaleOrderItemsTable({ form, isLoading, productsState, ta
                     // Map column indices to field names (skip image column at index 0)
                     switch (targetColIndex) {
                         case 1: // Name column
-                            form.setValue(`order_lines.${targetRowIndex}.name`, cellValue || "");
+                            form.setValue(`order_line.${targetRowIndex}.name`, cellValue || "");
                             break;
                         case 2: // Quantity column
                             // Note: field name changed to 'product_uom_qty'
                             const quantity = parseInt(cellValue) || 1;
-                            form.setValue(`order_lines.${targetRowIndex}.product_uom_qty`, quantity);
+                            form.setValue(`order_line.${targetRowIndex}.product_uom_qty`, quantity);
                             break;
                         case 3: // Price column
                             const price = parseFloat(cellValue) || 0;
-                            form.setValue(`order_lines.${targetRowIndex}.price_unit`, price);
+                            form.setValue(`order_line.${targetRowIndex}.price_unit`, price);
                             break;
                         // For any other column, the logic should be here if custom columns were used
                     }
@@ -181,7 +181,7 @@ export default function SaleOrderItemsTable({ form, isLoading, productsState, ta
                             <TableCell onClick={() => handleCellClick(index, 0)} className={`cursor-pointer ${selectedCell?.row === index && selectedCell?.col === 0 ? "bg-blue-100" : ""}`}>
                                 <FormField
                                     control={form.control}
-                                    name={`order_lines.${index}.image`}
+                                    name={`order_line.${index}.image`}
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormControl>
@@ -204,7 +204,7 @@ export default function SaleOrderItemsTable({ form, isLoading, productsState, ta
                             <TableCell  onClick={() => handleCellClick(index, 1)} className={selectedCell?.row === index && selectedCell?.col === 1 ? "bg-blue-100" : ""}>
                                 <FormField
                                     control={form.control}
-                                    name={`order_lines.${index}.name`} // Keep 'name' as the primary field for paste/display
+                                    name={`order_line.${index}.name`} // Keep 'name' as the primary field for paste/display
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormControl>
@@ -212,16 +212,17 @@ export default function SaleOrderItemsTable({ form, isLoading, productsState, ta
                                                 <ProductCombobox 
                                                     
                                                     products={productsState.data || []}
-                                                    value={form.watch(`order_lines.${index}.name`) || ""}
+                                                    value={form.watch(`order_line.${index}.name`) || ""}
                                                     onChange={(value) => {
-                                                        form.setValue(`order_lines.${index}.name`, value)
+                                                        form.setValue(`order_line.${index}.name`, value)
                                                     }}
                                                     onSelectProduct={(product) => {
                                                         if (product) {
-                                                            form.setValue(`order_lines.${index}.product_id`, product.id)
-                                                            form.setValue(`order_lines.${index}.price_unit`, product.list_price || 0)
+
+                                                            form.setValue(`order_line.${index}.product_id`, product.id)
+                                                            form.setValue(`order_line.${index}.price_unit`, product.list_price || 0)
                                                         } else {
-                                                            form.setValue(`order_lines.${index}.product_id`, false)
+                                                            form.setValue(`order_line.${index}.product_id`, false)
                                                         }
                                                     }}
                                                 />
@@ -235,7 +236,7 @@ export default function SaleOrderItemsTable({ form, isLoading, productsState, ta
 
                                 <FormField
                                     control={form.control}
-                                    name={`order_lines.${index}.product_id`}
+                                    name={`order_line.${index}.product_id`}
                                     render={() => <Input type="hidden" />}
                                 />
                             </TableCell>
@@ -244,7 +245,7 @@ export default function SaleOrderItemsTable({ form, isLoading, productsState, ta
                             <TableCell onClick={() => handleCellClick(index, 2)} className={selectedCell?.row === index && selectedCell?.col === 2 ? "bg-blue-100" : ""}>
                                 <FormField
                                     control={form.control}
-                                    name={`order_lines.${index}.product_uom_qty`} // <-- CHANGED FIELD NAME
+                                    name={`order_line.${index}.product_uom_qty`} // <-- CHANGED FIELD NAME
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormControl>
@@ -260,7 +261,7 @@ export default function SaleOrderItemsTable({ form, isLoading, productsState, ta
                             <TableCell onClick={() => handleCellClick(index, 3)} className={selectedCell?.row === index && selectedCell?.col === 3 ? "bg-blue-100" : ""}>
                                 <FormField
                                     control={form.control}
-                                    name={`order_lines.${index}.price_unit`}
+                                    name={`order_line.${index}.price_unit`}
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormControl>
@@ -274,7 +275,7 @@ export default function SaleOrderItemsTable({ form, isLoading, productsState, ta
                             </TableCell>
                             {/* Subtotal Calculation */}
                             <TableCell className="text-right font-medium">
-                                ${((form.watch(`order_lines.${index}.product_uom_qty`) || 0) * (form.watch(`order_lines.${index}.price_unit`) || 0)).toFixed(2)}
+                                ${((form.watch(`order_line.${index}.product_uom_qty`) || 0) * (form.watch(`order_line.${index}.price_unit`) || 0)).toFixed(2)}
                             </TableCell>
                             {/* Actions Button */}
                             <TableCell>
@@ -303,7 +304,7 @@ export default function SaleOrderItemsTable({ form, isLoading, productsState, ta
                             const emptyIndices = fields
                                 .map((field, index) => ({ field, index }))
                                 .filter(({ index }) => {
-                                    const line = form.watch(`order_lines.${index}`);
+                                    const line = form.watch(`order_line.${index}`);
                                     // Check for empty name AND (qty <= 0 OR price <= 0) - assuming qty/price must be > 0 if a product is named
                                     return !line?.name && (line?.product_uom_qty || 0) <= 0 && (line?.price_unit || 0) <= 0;
                                 })

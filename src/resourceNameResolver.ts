@@ -76,29 +76,30 @@ const resourceNameResolver: { [key: string]: { modelName: string; fields: {} } }
 		modelName: "res.partner",
 		fields: {
 			fields: [
-                "id", 
-                "name", 
-                "email", 
-                "phone", 
-                "mobile",
-                "website",
-                "street",
-                "street2",
-                "city",
-                "state_id",
-                "zip",
-                "country_id",
-                "vat",
-                "is_company",
-                "supplier_rank",
-                "customer_rank",
-                "category_id",
-                "comment",
-                "avatar_1024"
-            ],
+				"id",
+				"name",
+				"email",
+				"phone",
+				"mobile",
+				"website",
+				"street",
+				"street2",
+				"city",
+				"state_id",
+				"zip",
+				"country_id",
+				"vat",
+				"is_company",
+				"supplier_rank",
+				"customer_rank",
+				"category_id",
+				"comment",
+				"avatar_1024"
+			],
 		},
 	},
-    user: {
+
+	user: {
 		modelName: "res.users",
 		fields: {
 			fields: ["id", "name", "email", "phone", "mobile", "website", "street", "street2", "city", "state_id", "zip", "country_id", "vat", "is_company", "supplier_rank", "customer_rank", "category_id", "comment", "avatar_1024"],
@@ -111,6 +112,29 @@ const resourceNameResolver: { [key: string]: { modelName: string; fields: {} } }
 		}
 
 	},
+
+	saleOrderLine: {
+		modelName: "sale.order.line",
+		fields: {
+			fields: [
+				"id",
+				"name",
+				"product_id",
+				"product_uom_qty",
+				"qty_delivered",
+				"price_unit",
+				"price_subtotal",
+				"price_total",
+				"discount",
+				"tax_id",
+				"order_id",
+				"currency_id",
+				"state",
+			],
+		},
+
+
+	},
 	accountPaymentTerm: {
 		modelName: "account.payment.term",
 		fields: {
@@ -118,12 +142,28 @@ const resourceNameResolver: { [key: string]: { modelName: string; fields: {} } }
 		}
 
 	},
+
+	saleOrderTemplate: {
+		modelName: "sale.order.template",
+		fields: {
+			fields: []
+		}
+	},
 	accountTax: {
 		modelName: "account.tax",
 		fields: {
 			fields: ["id", "name", "amount", "type_tax_use", "price_include"],
 		},
 	},
+
+	mailComposeMessage: {
+		modelName: "mail.compose.message",
+		fields: {}
+	},
+	saleOrderCancel: {
+		modelName: "sale.order.cancel",
+		fields: {}
+	}
 
 
 };

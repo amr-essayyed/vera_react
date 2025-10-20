@@ -1,4 +1,4 @@
-import {startCase} from "lodash";
+import { startCase } from "lodash";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { FormControl, FormField, FormItem, FormMessage } from "./ui/form";
 import { Label } from "./ui/label";
@@ -29,14 +29,25 @@ export default function AppSelectFormField({
             render={({ field }) => (
                 <FormItem>
                     <Label>{startCase(label)}</Label>
-                    <div className="flex gap-2">                    
+                    <div className="flex gap-2">
                         <FormControl>
-                            <Select onValueChange={(val) => field.onChange(JSON.parse(val))} value={field.value ? JSON.stringify(field.value) : ""} disabled={resourceState?.isLoading}>
+                            <Select
+                                onValueChange={(val) => {
+                                    if (val === "0" || val === "") return field.onChange(undefined);
+                                    const selected: any = resourceState?.data?.find((r: any) => String(r.id) === val);
+                                    field.onChange(selected ? { id: selected.id, name: selected.name } : Number(val));
+                                }}
+                                value={
+                                    field.value
+                                        ? String(typeof field.value === "number" ? field.value : field.value.id)
+                                        : ""
+                                }
+                                disabled={resourceState?.isLoading}
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder={resourceState?.isLoading ? `Loading ${startCase(label)}...` : `Select ${startCase(label)}`} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {resourceState && <SelectItem value="0">No {startCase(label)}</SelectItem>}
                                     {resourceState?.data?.map((resource: any) => (
                                         <SelectItem key={resource.id} value={String(resource.id)}>
                                             {resource.name}

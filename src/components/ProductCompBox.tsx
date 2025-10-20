@@ -57,6 +57,9 @@ export const ProductCombobox: React.FC<ProductComboboxProps> = ({
       toast.success("Product created successfully! 🎉")
       
       // Create a product object from the response
+
+      const createdProductId = data;
+
       const createdProduct: Product = {
         id: data, // Odoo returns the ID
         name: newProduct.name,
@@ -67,7 +70,7 @@ export const ProductCombobox: React.FC<ProductComboboxProps> = ({
 
       // Select the newly created product
       onChange(newProduct.name)
-      onSelectProduct?.(createdProduct)
+      onSelectProduct?.({ ...newProduct, id: createdProductId })
 
       // Reset and close
       setDialogOpen(false)
