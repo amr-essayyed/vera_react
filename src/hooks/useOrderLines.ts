@@ -1,55 +1,64 @@
-import type { many2oneSchema } from "@/types/odooSchemas";
-import type { tPurchaseOrderLineForm } from "@/types/purchaseOrder";
+import type { tOrderLineForm, tOrderLineCreate } from "@/types/purchaseOrder";
 import { imageToBase64 } from "@/utils/imageUtils";
-import {z} from "zod";
 import { useCreateMultipleResources } from "./useResource";
+import type { tProductCreate, tProductRead } from "@/types/product";
+import { omit } from "@/utils/miscUtils";
+// import { useQueryClient } from "@tanstack/react-query";
+import { ResourceService } from "@/services/resourceService";
 
-export function useOrderLine(orderModel: string) {
+export function useProducts() {
+	const { mutateAsync: mutateProduct } = useCreateMultipleResources("product");
+	// const queryClient = useQueryClient();
 
-    const { mutateAsync: mutatePurchaseOrderLine } = useCreateMultipleResources(orderModel);
-    const { mutateAsync: mutateProduct } = useCreateMultipleResources("product");
-    
-    async function onOrderLineFormSubmit(values: tPurchaseOrderLineForm, orderId: z.infer<typeof many2oneSchema>, products: any) {
-        // Filter out empty lines (lines without product names)
-        const validOrderLines = (values.order_lines || []).filter((line) => line.name && line.name.trim().length > 0);
-    
-        // Process all order lines and convert images to base64
-        const newProducts = validOrderLines.filter((product) => !products?.some((p: any) => p.name === product.name));
-    
-        const productsToCreate = await Promise.all(
-            newProducts.map(async (line) => {
-                const imageBase64 = line.image ? await imageToBase64(line.image) : null;
-    
-                // Build the product object
-                const product: any = {
-                    name: line.name,
-                    list_price: line.price_unit,
-                    image_1920: imageBase64,
-                };
-    
-                return product;
-            })
-        );
-    
-        // Step 1: Create all products first
-        const createdProducts = await mutateProduct(productsToCreate);
-    
-        // Step 3: Create purchase order lines with purchase order and product references
-        const purchaseOrderLinesToCreate = validOrderLines.map((line, index) => ({
-            order_id: orderId, // Reference to purchase order
-            product_id: createdProducts[index]?.id, // Reference to created product
-            product_qty: line.product_qty, // Using product_qty field
-            price_unit: line.price_unit,
-            name: line.name,
-        }));
-        
-        // Only create purchase order lines if there are valid lines
-        if (purchaseOrderLinesToCreate.length > 0) {
-            await mutatePurchaseOrderLine(purchaseOrderLinesToCreate);
-        }
-    }
+	async function createProducts(orderLines: tOrderLineForm[], products: tProductRead[]) {
+		// Filter out empty lines
+		const validOrderLines = (orderLines || []).filter((line) => line.product_name && line.product_name.trim().length > 0);
+		console.log("validOrderLines", validOrderLines);
 
-    return {
-        onOrderLineFormSubmit,
-    }
+		// Identify which products don't exist yet
+		const newProducts = validOrderLines.filter((line) => !products?.some((p) => p.name === line.product_name));
+		const existProducts = products.filter((p) => validOrderLines?.some((line) => p.name === line.product_name));
+
+		// Prepare data for creation
+		const productsToCreate = await Promise.all(
+			newProducts.map(async (line) => {
+				const imageBase64 = line.image? await imageToBase64(line.image) : null;
+
+				const product: tProductCreate = {
+					name: line.product_name,
+					standard_price: line.price_unit || 0,
+					image_1920: imageBase64,
+				};
+
+				return product;
+			})
+		);
+
+		// Create new products
+		console.log("creating new products:", productsToCreate);
+		const createdProducts: number[] = await mutateProduct(productsToCreate);
+		console.log("created products:", createdProducts);
+        // Refetch products after creation
+		console.log("before refetch products:", products);
+		// await queryClient.refetchQueries({ queryKey: ["product"] });
+        const newGotProducts: tProductRead[] = await ResourceService.getManyById("product",createdProducts);
+        const lineProducts = [...newGotProducts, ...existProducts]
+		console.log("updated products:", products);
+
+		// Get the updated products from cache after refetch
+		// const updatedProducts = (queryClient.getQueryData(["products"]) as tProductRead[]) || products;
+
+		// Build order lines using the updated product list
+		const orderLinesWithProducts: tOrderLineCreate[] = validOrderLines.map((line) => ({
+                product_id: lineProducts.find((p) => p.name === line.product_name)?.product_variant_id[0],
+                ...omit(line, ["product_name", "image"]),
+            }));
+
+		console.log("orderLinesWithProducts", orderLinesWithProducts);
+		return orderLinesWithProducts;
+	}
+
+	return {
+		createProducts,
+	};
 }

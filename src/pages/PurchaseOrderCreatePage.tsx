@@ -3,9 +3,9 @@ import { useNavigate, Link } from "react-router-dom";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAllResource, useCreateResource } from "@/hooks/useResource";
+import { useAllResource, useCreateMultipleResources, useCreateResource, useCreateResourceWithChild } from "@/hooks/useResource";
 import ItemsTable from "@/components/ItemsTable";
-import { purchaseOrderFormSchema, purchaseOrderLineFormSchema, type tPurchaseOrderForm, type tPurchaseOrderLineForm } from "@/types/purchaseOrder";
+import { purchaseOrderFormSchema, type tOrderLineCreate, type tPurchaseOrderForm } from "@/types/purchaseOrder";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, ShoppingCart, Save, AlertCircle } from "lucide-react";
@@ -16,7 +16,7 @@ import AppSelectFormField from "@/components/AppSelectFormField";
 import AppInputFormField from "@/components/AppInputFormField";
 import type z from "zod";
 import { normalizeDateFields } from "@/utils/dateUtils";
-import { useOrderLine } from "@/hooks/useOrderLines";
+import { useProducts } from "@/hooks/useOrderLines";
 import type { many2oneSchema } from "@/types/odooSchemas";
 
 export default function PurchaseOrderCreatePage() {
@@ -24,8 +24,11 @@ export default function PurchaseOrderCreatePage() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const { mutateAsync: mutatePurchaseOrder } = useCreateResource("purchaseOrder");
+	const { mutateAsync: mutatePurchaseOrderLine } = useCreateMultipleResources("purchaseOrderLine");
+	// const { mutateAsync: mutatePurchaseOrder } = useCreateResourceWithChild("purchaseOrder","order_line");
 
-    const { onOrderLineFormSubmit } = useOrderLine('purchaseOrderLine')
+    // const { onOrderLineFormSubmit } = useOrderLine('purchaseOrderLine')
+    const {createProducts} = useProducts();
 
 	// use query: getAll suppliers and products
 	// const { data: suppliers, isLoading: isSuppliersLoading, error: suppliersError } = useAllResource("contact" /* , [["supplier_rank", ">", 0]] */);
@@ -46,56 +49,79 @@ export default function PurchaseOrderCreatePage() {
 		defaultValues: {
 			state: "draft",
 			order_status: "pending",
+            order_line: []
 		},
 	});
 
-	const purchaseOrderLineForm = useForm({
-		resolver: zodResolver(purchaseOrderLineFormSchema)
-	});
+	// const purchaseOrderLineForm = useForm({
+	// 	resolver: zodResolver(purchaseOrderLineFormSchema)
+	// });
 
-    var purchaseOrderIdGlobal: z.infer<typeof many2oneSchema>;
+    // var purchaseOrderIdGlobal: z.infer<typeof many2oneSchema>;
 	// Submit handler
 	const onPurchaseOrderFormSubmit = async (values: tPurchaseOrderForm) => {
         console.log("PO Form values:", values);
 
         setIsSubmitting(true);
-
-        const purchaseOrderData = normalizeDateFields(values);
-        // Create PO
-        const createdPurchaseOrder = await mutatePurchaseOrder(purchaseOrderData);
-        // Extract the ID from the response - it might be just the number or in a different property
-        const purchaseOrderId = createdPurchaseOrder.id || createdPurchaseOrder || (typeof createdPurchaseOrder === "number" ? createdPurchaseOrder : null);
-
-        if (!purchaseOrderId) {
-            throw new Error("Failed to get purchase order ID from response");
-        }
-        purchaseOrderIdGlobal = purchaseOrderId;
-	};
-
-    async function handleSaveForms() {
-        console.log('handle Save forms');
-        
         try {
-            const isPurchaseOrderValid = await purchaseOrderForm.trigger();
-            const isPurchaseOrderLineValid = await purchaseOrderLineForm.trigger();
+            const lines = await createProducts(values.order_line, products);
+            // const purchaseOrderCreate =  {...values, order_line: lines}
+            const purchaseOrderCreate =  {...values, order_line: null}
+            const purchaseOrderData = normalizeDateFields(purchaseOrderCreate);
+
+            // Create PO
+            console.log("[purchaseOrderData]: ", purchaseOrderData);
+            const createdPurchaseOrder = await mutatePurchaseOrder(purchaseOrderData);
+            console.log("[createdPurchaseOrder]: ", createdPurchaseOrder);
             
-            if (!isPurchaseOrderValid || !isPurchaseOrderLineValid) {
-                toast.error("Fix fields before submitting")
-                throw new Error("Validation Erro");
-            }
+            // Create PO Lines
+            const purchaseOrderLineData = lines.map((line: tOrderLineCreate) => {
+                return {...line, order_id: createdPurchaseOrder};
+            });
 
-            // Trigger form submission for both forms
-            await purchaseOrderForm.handleSubmit(onPurchaseOrderFormSubmit)();
-            await purchaseOrderLineForm.handleSubmit((values) => onOrderLineFormSubmit(values, purchaseOrderIdGlobal, products))();
+            await mutatePurchaseOrderLine(purchaseOrderLineData);
 
-            toast.success("Purchase order created successfully!");
-            navigate("/purchase-orders");
+
+            // Extract the ID from the response - it might be just the number or in a different property
+            // const purchaseOrderId = createdPurchaseOrder.id || createdPurchaseOrder || (typeof createdPurchaseOrder === "number" ? createdPurchaseOrder : null);
+
+            // if (!purchaseOrderId) {
+            //     throw new Error("Failed to get purchase order ID from response");
+            // }
         } catch (error) {
-            toast.error("Failed to save forms. Please try again.");
+            toast.error("Failed to save form. Please try again.");
+            console.error("error: ", error);
         } finally {
             setIsSubmitting(false);
+            toast.success("Purchase order created successfully!");
         }
-    }
+        // purchaseOrderIdGlobal = purchaseOrderId;
+	};
+
+    // async function handleSaveForms() {
+    //     console.log('handle Save forms');
+        
+    //     try {
+    //         const isPurchaseOrderValid = await purchaseOrderForm.trigger();
+    //         const isPurchaseOrderLineValid = await purchaseOrderLineForm.trigger();
+            
+    //         if (!isPurchaseOrderValid || !isPurchaseOrderLineValid) {
+    //             toast.error("Fix fields before submitting")
+    //             throw new Error("Validation Erro");
+    //         }
+
+    //         // Trigger form submission for both forms
+    //         await purchaseOrderForm.handleSubmit(onPurchaseOrderFormSubmit)();
+    //         await purchaseOrderLineForm.handleSubmit((values) => onOrderLineFormSubmit(values, purchaseOrderIdGlobal, products))();
+
+    //         toast.success("Purchase order created successfully!");
+    //         navigate("/purchase-orders");
+    //     } catch (error) {
+    //         toast.error("Failed to save forms. Please try again.");
+    //     } finally {
+    //         setIsSubmitting(false);
+    //     }
+    // }
 
 	const isLoading = isProductsLoading || contactState.isLoading //|| isCompaniesLoading || isUsersLoading || isCurrenciesLoading || isPickingTypesLoading || isPaymentTermsLoading || isFiscalPositionsLoading || isIncotermsLoading;
 	const hasErrors = productsError || contactState.error //|| currenciesError //|| companiesError || usersError || pickingTypesError || paymentTermsError || fiscalPositionsError || incotermsError;
@@ -302,79 +328,87 @@ export default function PurchaseOrderCreatePage() {
                                             ]}
                                         />
                                     </div>
+
+                                    <br />
+                                    <CardTitle>Order Items (Optional)</CardTitle>
+                                    <div>
+                                        <ItemsTable form={purchaseOrderForm} isLoading={isLoading} />
+
+                                        {/* Order Summary */}
+                                        {/* <div className="mt-6 pt-4 border-t">
+                                            <div className="flex justify-end">
+                                                <div className="w-64 space-y-2">
+                                                    <div className="flex justify-between text-sm">
+                                                        <span>Subtotal:</span>
+                                                        <span className="font-medium">
+                                                            $
+                                                            {purchaseOrderLineForm.watch("order_line")
+                                                                ?.reduce((total, line) => total + (line.product_qty || 0) * (line.price_unit || 0), 0)
+                                                                .toFixed(2) || "0.00"}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between text-base font-semibold border-t pt-2">
+                                                        <span>Total:</span>
+                                                        <span>
+                                                            $
+                                                            {purchaseOrderLineForm
+                                                                .watch("order_line")
+                                                                ?.reduce((total, line) => total + (line.product_qty || 0) * (line.price_unit || 0), 0)
+                                                                .toFixed(2) || "0.00"}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div> */}
+                                    </div>
 							</CardContent>
 						</Card>
 
 						{/* Actions */}
-						{/*  */}
+						<div className="flex justify-end space-x-4">
+                            <Link to="/purchase-orders">
+                                <Button type="button" variant="outline">
+                                    Cancel
+                                </Button>
+                            </Link>
+                            <Button 
+                                type="submit" 
+                                // onClick={handleSaveForms}
+                                disabled={isSubmitting || isLoading}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                        Creating...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="h-4 w-4 mr-2" />
+                                        Create Purchase Order
+                                    </>
+                                )}
+                            </Button>
+                        </div>
 					</form>
 				</Form>
-                <Form {...purchaseOrderLineForm}>
+                
+                {/* <Form {...purchaseOrderLineForm}>
                     <form className="space-y-6">
-                        						{/* Order Lines */}
+                        						order Lines here
 						<Card>
 							<CardHeader>
 								<CardTitle>Order Items (Optional)</CardTitle>
 								<p className="text-sm text-gray-500 mt-1">Add items to your purchase order. You can paste data from spreadsheets (Ctrl+V) or add items manually. Leave empty to create a purchase order without specific items.</p>
 							</CardHeader>
 							<CardContent>
-								<ItemsTable form={purchaseOrderLineForm} isLoading={isLoading} />
-
-								{/* Order Summary */}
-								<div className="mt-6 pt-4 border-t">
-									<div className="flex justify-end">
-										<div className="w-64 space-y-2">
-											<div className="flex justify-between text-sm">
-												<span>Subtotal:</span>
-												<span className="font-medium">
-													$
-													{purchaseOrderLineForm.watch("order_lines")
-														?.reduce((total, line) => total + (line.product_qty || 0) * (line.price_unit || 0), 0)
-														.toFixed(2) || "0.00"}
-												</span>
-											</div>
-											<div className="flex justify-between text-base font-semibold border-t pt-2">
-												<span>Total:</span>
-												<span>
-													$
-													{purchaseOrderLineForm
-														.watch("order_lines")
-														?.reduce((total, line) => total + (line.product_qty || 0) * (line.price_unit || 0), 0)
-														.toFixed(2) || "0.00"}
-												</span>
-											</div>
-										</div>
-									</div>
-								</div>
+								
 							</CardContent>
 						</Card>
                     </form>
-                </Form>
+                </Form> */}
+
                 {/* Actions master */}
-                <div className="flex justify-end space-x-4">
-                    <Link to="/purchase-orders">
-                        <Button type="button" variant="outline">
-                            Cancel
-                        </Button>
-                    </Link>
-                    <Button 
-                        // type="submit" 
-                        onClick={handleSaveForms}
-                        disabled={isSubmitting || isLoading}
-                    >
-                        {isSubmitting ? (
-                            <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                Creating...
-                            </>
-                        ) : (
-                            <>
-                                <Save className="h-4 w-4 mr-2" />
-                                Create Purchase Order
-                            </>
-                        )}
-                    </Button>
-                </div>
+                
 			</div>
 		</div>
 	);

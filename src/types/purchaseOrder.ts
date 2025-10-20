@@ -33,7 +33,7 @@
     - invoice_count: Number of vendor bills created
 */
 import { z } from "zod";
-import { many2manySchema, many2oneSchema } from "./odooSchemas";
+import { many2oneSchema } from "./odooSchemas";
 
 /** Common enums from purchase.order */
 export const purchaseStateEnum = z.enum([
@@ -58,21 +58,35 @@ export const orderStatusEnum = z.enum([
     "delivered",
 ])
 
-/** Order line schema (purchase.order.line) */
-export const purchaseOrderLineSchema = z.object({
-	id: z.number().int().positive().optional(),
-	name: z.string().min(1), // description
-	product_id: many2oneSchema.optional(),
-	product_uom: many2oneSchema.optional(), // unit of measure
-	date_planned: z.string().optional(), // ISO datetime string from server
-	product_qty: z.number().nonnegative(),
-	price_unit: z.number().nonnegative(),
-	taxes_id: many2manySchema.optional(), // taxes applied
-	price_subtotal: z.number().optional(), // computed by Odoo
-	price_total: z.number().optional(), // computed by Odoo
-	display_type: z.enum(["line_section", "line_note"]).optional(), // Odoo display-only lines
+export const orderLineFormSchema = z.object({
+	product_name: z.string(),
+	product_qty: z.number().min(1, "Quantity must be 0 or greater").default(1).optional(),
+	price_unit: z.number().min(0, "Price must be 0 or greater").default(0).optional(),
+    image: z.instanceof(File).optional(), // For form file upload
 });
-// .catchall(z.any()); // Allow additional custom fields
+
+export const orderLineCreateSchema = z.object({
+    // name: z.string(), // Product name
+	product_id: many2oneSchema.optional(),
+	product_qty: z.number().min(0, "Quantity must be 0 or greater").default(1).optional(),
+	price_unit: z.number().min(0, "Price must be 0 or greater").default(0).optional(),
+	price_subtotal: z.number().optional(), // computed by Odoo
+});
+
+export const orderLineUpdateSchema = z.object({
+	product_id: many2oneSchema.optional(),
+	product_qty: z.number().min(0, "Quantity must be 0 or greater").default(1).optional(),
+	price_unit: z.number().min(0, "Price must be 0 or greater").default(0).optional(),
+	price_subtotal: z.number().optional(), // computed by Odoo
+});
+
+export const orderLineReadSchema = z.object({
+	id: z.number().int().positive().optional(),
+	product_id: many2oneSchema.optional(),
+	product_qty: z.number().min(0, "Quantity must be 0 or greater").default(1).optional(),
+	price_unit: z.number().min(0, "Price must be 0 or greater").default(0).optional(),
+	price_subtotal: z.number().optional(), // computed by Odoo
+});
 
 /** Purchase order schema for API responses (may have line IDs only) */
 export const purchaseOrderSchema = z.object({
@@ -111,26 +125,7 @@ export const purchaseOrderSchema = z.object({
 
 	notes: z.string().optional(), // terms/notes
 });
-// .catchall(z.any()); // Allow additional fields from API
 
-
-/** Extended purchase order line for form with image support */
-export const purchaseOrderLineFormSchema = z.object({
-    order_lines: z.array(z.object({
-	// id: z.number().int().positive().optional(),
-	name: z.string().optional(), // Make optional for form
-	product_id: many2oneSchema.optional(),
-	product_uom: many2oneSchema.optional(), // unit of measure
-	// date_planned: z.string().optional(), // ISO datetime string from server
-	product_qty: z.number().min(0, "Quantity must be 0 or greater").default(1).optional(),
-	price_unit: z.number().min(0, "Price must be 0 or greater").default(0).optional(),
-	taxes_id: many2manySchema.optional(), // taxes applied
-	price_subtotal: z.number().optional(), // computed by Odoo
-	price_total: z.number().optional(), // computed by Odoo
-	// display_type: z.enum(["line_section", "line_note"]).optional(), // Odoo display-only lines
-	image: z.instanceof(File).optional(), // For form file upload
-    }))
-}); // .catchall(z.any()); // Allow custom fields as direct properties
 
 /** Form schema for purchase order creation - includes all relevant fields */
 export const purchaseOrderFormSchema = purchaseOrderSchema.pick({
@@ -142,17 +137,20 @@ export const purchaseOrderFormSchema = purchaseOrderSchema.pick({
     date_planned: true,
     invoice_status: true,
 })
-// .extend({
-// 	order_line: z.array(purchaseOrderLineFormSchema).optional().default([]),
-// });
+.extend({
+	order_line: z.array(orderLineFormSchema).optional().default([]),
+});
 
-/** Handy TS types */
-// export type tPurchaseOrderApi = z.infer<typeof purchaseOrderApiSchema>;
-export type tPurchaseOrder = z.infer<typeof purchaseOrderSchema>;
-export type tPurchaseOrderLine = z.infer<typeof purchaseOrderLineSchema>;
-// export type CustomColumn = z.infer<typeof customColumnSchema>;
-export type tPurchaseOrderLineForm = z.infer<typeof purchaseOrderLineFormSchema>;
+
 export type tPurchaseOrderForm = z.infer<typeof purchaseOrderFormSchema>;
+export type tPurchaseOrder = z.infer<typeof purchaseOrderSchema>;
+
+
+export type tOrderLineForm = z.infer<typeof orderLineFormSchema>;
+export type tOrderLineCreate = z.infer<typeof orderLineCreateSchema>;
+export type tOrderLineUpdate = z.infer<typeof orderLineUpdateSchema>;
+export type tOrderLineRead = z.infer<typeof orderLineReadSchema>;
+// export type CustomColumn = z.infer<typeof customColumnSchema>;
 
 export const purchaseOrderKeys = Object.keys(purchaseOrderSchema.shape);
-export const purchaseOrderLineKeys = Object.keys(purchaseOrderLineSchema.shape);
+export const purchaseOrderLineKeys = Object.keys(orderLineReadSchema.shape);

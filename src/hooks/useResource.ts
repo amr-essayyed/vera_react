@@ -2,8 +2,9 @@ import { useMutation, useQuery, useQueryClient, type MutationFunction } from "@t
 import { ResourceService } from "../services/resourceService";
 import type { ResourceData } from "../types/resourceData";
 import type { WithId } from "@/types/withId";
+import type { Model } from "@/resourceNameResolver";
 
-function useAllResource(resourceName: string, condition?: any[]) {
+function useAllResource(resourceName: Model, condition?: any[]) {
 	return useQuery({
 		queryKey: [resourceName],
 		queryFn: async () => await ResourceService.getAll(resourceName, condition),
@@ -12,7 +13,7 @@ function useAllResource(resourceName: string, condition?: any[]) {
 	});
 }
 
-function useResourceById<T extends WithId>(resourceName: string, idValue: string) {
+function useResourceById<T extends WithId>(resourceName: Model, idValue: string) {
 	const queryClient = useQueryClient();
 	return useQuery({
 		queryKey: [resourceName, idValue],
@@ -25,7 +26,7 @@ function useResourceById<T extends WithId>(resourceName: string, idValue: string
 	});
 }
 
-function useResourceByProp<T>(resourceName: string, propName: string, propValue: T) {
+function useResourceByProp<T>(resourceName: Model, propName: string, propValue: T) {
 	const queryClient = useQueryClient();
 	return useQuery({
 		queryKey: [resourceName, propName, propValue],
@@ -37,7 +38,7 @@ function useResourceByProp<T>(resourceName: string, propName: string, propValue:
 	});
 }
 
-function useCreateResource(resourceName: string) {
+function useCreateResource(resourceName: Model) {
 	const queryClient = useQueryClient();
 	// return useMutation<any,Error,ResourceData,unknown>({
 	return useMutation<any, Error, any, unknown>({
@@ -49,7 +50,7 @@ function useCreateResource(resourceName: string) {
 	});
 }
 
-function useCreateResourceWithChild(resourceName: string, childField: string) {
+function useCreateResourceWithChild(resourceName: Model, childField: string) {
 	const queryClient = useQueryClient();
 	// return useMutation<any,Error,ResourceData,unknown>({
 	return useMutation<any, Error, any, unknown>({
@@ -97,7 +98,7 @@ function useCreateResourceWithChild(resourceName: string, childField: string) {
 //   });
 // }
 
-function useCreateMultipleResources(resourceName: string) {
+function useCreateMultipleResources(resourceName: Model) {
 	const queryClient = useQueryClient();
 	return useMutation<any, Error, any[], unknown>({
 		mutationFn: (resourceInstances) => ResourceService.createMultiple(resourceName, resourceInstances),
@@ -121,7 +122,7 @@ function useCreateMultipleResources(resourceName: string) {
 //     });
 // }
 
-function useUpdateResource(resourceName: string) {
+function useUpdateResource(resourceName: Model) {
 	const queryClient = useQueryClient();
 	return useMutation<any, Error, { id: string; resourceInstance: any }, unknown>({
 		mutationFn: ({ id, resourceInstance }) => ResourceService.updateById(resourceName, id, resourceInstance),
@@ -131,7 +132,7 @@ function useUpdateResource(resourceName: string) {
 	});
 }
 
-function useDeleteResource(resourceName: string) {
+function useDeleteResource(resourceName: Model) {
 	const queryClient = useQueryClient();
 	return useMutation<any, Error, string, unknown>({
 		mutationFn: (id) => ResourceService.deleteById(resourceName, id),

@@ -1,6 +1,8 @@
+import { currencyKeys } from "./types/currency";
+import { productKeys } from "./types/product";
 import { purchaseOrderKeys, purchaseOrderLineKeys } from "./types/purchaseOrder";
 
-const resourceNameResolver: { [key: string]: { modelName: string; fields: {} } } = {
+const resourceNameResolver= {
 	masterOrder: {
 		modelName: "at.master.order",
 		fields: {
@@ -17,7 +19,7 @@ const resourceNameResolver: { [key: string]: { modelName: string; fields: {} } }
 	purchaseOrder: {
 		modelName: "purchase.order",
 		fields: {
-			fields: [...purchaseOrderKeys],
+			fields: purchaseOrderKeys,
 			// limit: 10,
 			// offset: 0
 		},
@@ -56,7 +58,7 @@ const resourceNameResolver: { [key: string]: { modelName: string; fields: {} } }
 	product: {
 		modelName: "product.template",
 		fields: {
-			fields: ["id", "name", "standard_price", "list_price"],
+			fields: productKeys,
 			// limit: 10,
 		},
 	},
@@ -124,8 +126,14 @@ const resourceNameResolver: { [key: string]: { modelName: string; fields: {} } }
 			fields: ["id", "name", "amount", "type_tax_use", "price_include"],
 		},
 	},
-
+    currency: {
+		modelName: "res.currency",
+		fields: {fields: currencyKeys},
+	},
 
 };
 
 export default resourceNameResolver;
+
+export type Model =  keyof typeof resourceNameResolver;
+

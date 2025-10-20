@@ -31,7 +31,7 @@ export default function AppSelectFormField({
                     <Label>{startCase(label)}</Label>
                     <div className="flex gap-2">                    
                         <FormControl>
-                            <Select onValueChange={(val) => field.onChange(JSON.parse(val))} value={field.value ? JSON.stringify(field.value) : ""} disabled={resourceState?.isLoading}>
+                            <Select onValueChange={ resourceState? (val) => field.onChange(JSON.parse(val)) : field.onChange} value={field.value ? (resourceState? JSON.stringify(field.value):field.value) : ""} disabled={resourceState?.isLoading}>
                                 <SelectTrigger>
                                     <SelectValue placeholder={resourceState?.isLoading ? `Loading ${startCase(label)}...` : `Select ${startCase(label)}`} />
                                 </SelectTrigger>

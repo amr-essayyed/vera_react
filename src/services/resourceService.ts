@@ -4,9 +4,10 @@
  * TanStack provides them in the output object of the hook (useQuery or useMutation)
  */
 
-import resourceNameResolver from "@/resourceNameResolver.ts";
+import resourceNameResolver, { type Model } from "@/resourceNameResolver.ts";
 import type { ApiResponse } from "../types/apiResponse.ts";
 import apiClient from "./apiClient.ts";
+import type { WithStringKeys } from "@/types/withStringKeyes.ts";
 
 // class RestResourceService {
 //     // C
@@ -71,7 +72,7 @@ import apiClient from "./apiClient.ts";
 
 class JsonRpcResourceService {
     // C
-    static async create<T>(resourceName: string, resourceInstance: T) {
+    static async create<T>(resourceName: Model, resourceInstance: T) {
         const serverResource = resourceNameResolver[resourceName];
         const body = {
             "jsonrpc": "2.0",
@@ -104,7 +105,7 @@ class JsonRpcResourceService {
     }
 
     // Bulk Create - for creating multiple resources at once
-    static async createMultiple<T>(resourceName: string, resourceInstances: T[]) {
+    static async createMultiple<T>(resourceName: Model, resourceInstances: T[]) {
         const serverResource = resourceNameResolver[resourceName];
         const body = {
             "jsonrpc": "2.0",
@@ -136,8 +137,11 @@ class JsonRpcResourceService {
         }
     }
 
-    static async createWithChild(resourceName: string, childField: string, resourceInstance: Record<string, unknown>) {
+    static async createWithChild(resourceName: Model, childField: string, resourceInstance: Record<string, WithStringKeys>) {
         const serverResource = resourceNameResolver[resourceName];
+        console.log("chli", resourceInstance[childField]);
+        console.log("chli", resourceInstance.childField);
+        
         const body = {
             "jsonrpc": "2.0",
             "method": "call",
@@ -153,12 +157,12 @@ class JsonRpcResourceService {
                     [
                         {
                             ...resourceInstance,
-                            [childField]: [(resourceInstance[childField] as unknown[]).map( (childInstance) => (
+                            [childField]: resourceInstance[childField].map( (childInstance:unknown) => (
                                 [
                                     0,0,
                                     childInstance
                                 ]
-                            ))]
+                            ))
                         }
                     ]
                 ]
@@ -181,7 +185,7 @@ class JsonRpcResourceService {
     }
 
     // R
-    static async getAll(resourceName: string, condition?: any[]) { // array of arrays and logic operators ["|", ["prop", "op", "val"], ...]
+    static async getAll(resourceName: Model, condition?: any[]) { // array of arrays and logic operators ["|", ["prop", "op", "val"], ...]
         const serverResource = resourceNameResolver[resourceName];
         
         const body = {
@@ -203,20 +207,22 @@ class JsonRpcResourceService {
             "id": 1
         };
         
-        resourceName = 'jsonrpc';
-        const response: ApiResponse  = await apiClient(resourceName, {method:"POST", body:JSON.stringify(body)});
+        console.log("body", body);
+        const response: ApiResponse  = await apiClient('jsonrpc', {method:"POST", body:JSON.stringify(body)});
+        console.log("response", response);
+
         if(! response.ok) {
-            throw new Error(response.errorMessage as string)
+            throw new Error("[service] Client Error: " + response.errorMessage as string)
         }else {
             if(response.parsedBody.error){
-                console.error("JSON-RPC Error:", response.parsedBody.error);
-                throw new Error(response.parsedBody.error.data.message as string)
+                console.error("[service] JSON-RPC Error: ", response.parsedBody.error);
+                throw new Error("[service] JSON-RPC Error: " + response.parsedBody.error.data.message as string)
             }
             return response.parsedBody.result;
         }
     }
 
-    static async getById(resourceName: string, id: string) {
+    static async getById(resourceName: Model, id: string) {
 
         const serverResource = resourceNameResolver[resourceName];
         
@@ -253,7 +259,42 @@ class JsonRpcResourceService {
         }
     }
     
-    static async getByProp<T>(resourceName: string, propName: string, propValue:T) {
+    static async getManyById(resourceName: Model, ids: number[]) {
+
+        const serverResource = resourceNameResolver[resourceName];
+        
+        const body = {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+                "service": "object",
+                "method": "execute_kw",
+                "args": [
+                "veradb", // database name               
+                2,          // user id                    
+                "admin",    // 
+                serverResource.modelName,            
+                "search_read",               
+                [[["id", "in", Array.isArray(ids) ? ids : [ids]]]],
+                serverResource.fields
+                ]
+            },
+            "id": 1
+        };
+
+        const response: ApiResponse = await apiClient('jsonrpc', {method:"POST", body:JSON.stringify(body)});
+        if(! response.ok) {
+            throw new Error(response.errorMessage as string)
+        }else {
+            if(response.parsedBody.error){
+                
+                throw new Error(response.parsedBody.error.data.message as string)
+            }
+            return response.parsedBody.result;
+        }
+    }
+    
+    static async getByProp<T>(resourceName: Model, propName: string, propValue:T) {
         //! depends on the API = for now use query parameters of the search string
         const serverResource = resourceNameResolver[resourceName];
         
@@ -291,7 +332,7 @@ class JsonRpcResourceService {
     }
 
     // U
-    static async updateById<T>(resourceName: string, id: string, resourceInstance: T) {
+    static async updateById<T>(resourceName: Model, id: string, resourceInstance: T) {
         const serverResource = resourceNameResolver[resourceName];
         const body = {
             "jsonrpc": "2.0",
@@ -322,7 +363,7 @@ class JsonRpcResourceService {
     }
 
     // D
-    static async deleteById(resourceName: string, id: string) {
+    static async deleteById(resourceName: Model, id: string) {
         const serverResource = resourceNameResolver[resourceName];
         const body = {
             "jsonrpc": "2.0",
