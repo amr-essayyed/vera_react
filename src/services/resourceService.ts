@@ -71,7 +71,7 @@ import apiClient from "./apiClient.ts";
 
 class JsonRpcResourceService {
 
-    static async create<T>(resourceName: string, resourceInstance: T, context: T) {
+    static async create<T>(resourceName: string, resourceInstance: T, context?: T) {
         const serverResource = resourceNameResolver[resourceName];
         const body = {
             "jsonrpc": "2.0",

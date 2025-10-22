@@ -160,7 +160,8 @@ const SalesOrderCreatePage = () => {
                                     productsState={productState}
                                     taxesState={taxesState}
 
-                                />                            </CardContent>
+                                />
+                            </CardContent>
                         </Card>
 
                         <Card>

@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { useParams,} from "react-router-dom"
+import { useParams, } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useForm } from "react-hook-form"
 import { ResourceService } from "@/services/resourceService"
@@ -15,7 +15,14 @@ export const useSalesOrderDetails = () => {
             partner_shipping_id: "",
             payment_term_id: "",
             validity_date: "",
-            state: ""
+            state: "",
+            order_line: [{
+                product_id: "",
+                product_uom_qty: 1,
+                price_unit: 0,
+                price_subtotal: 0,
+
+            }],
         },
     })
 
