@@ -8,7 +8,6 @@ import { ResourceService } from "@/services/resourceService";
 
 export function useProducts() {
 	const { mutateAsync: mutateProduct } = useCreateMultipleResources("product");
-	// const queryClient = useQueryClient();
 
 	async function createProducts(orderLines: tOrderLineForm[], products: tProductRead[]) {
 		// Filter out empty lines
@@ -16,7 +15,10 @@ export function useProducts() {
 		console.log("validOrderLines", validOrderLines);
 
 		// Identify which products don't exist yet
-		const newProducts = validOrderLines.filter((line) => !products?.some((p) => p.name === line.product_name));
+        const existingProducts: tProductRead[] = await ResourceService.getManyByName("product", validOrderLines.map((line) => line.product_name));
+        console.log("existingProducts", existingProducts);
+        
+		const newProducts = validOrderLines.filter((line) => !existingProducts?.some((p) => p.name === line.product_name));
 		const existProducts = products.filter((p) => validOrderLines?.some((line) => p.name === line.product_name));
 
 		// Prepare data for creation
@@ -38,15 +40,10 @@ export function useProducts() {
 		console.log("creating new products:", productsToCreate);
 		const createdProducts: number[] = await mutateProduct(productsToCreate);
 		console.log("created products:", createdProducts);
+        
         // Refetch products after creation
-		console.log("before refetch products:", products);
-		// await queryClient.refetchQueries({ queryKey: ["product"] });
         const newGotProducts: tProductRead[] = await ResourceService.getManyById("product",createdProducts);
         const lineProducts = [...newGotProducts, ...existProducts]
-		console.log("updated products:", products);
-
-		// Get the updated products from cache after refetch
-		// const updatedProducts = (queryClient.getQueryData(["products"]) as tProductRead[]) || products;
 
 		// Build order lines using the updated product list
 		const orderLinesWithProducts: tOrderLineCreate[] = validOrderLines.map((line) => ({

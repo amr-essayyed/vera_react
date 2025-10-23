@@ -3,6 +3,7 @@ import { ResourceService } from "../services/resourceService";
 import type { ResourceData } from "../types/resourceData";
 import type { WithId } from "@/types/withId";
 import type { Model } from "@/resourceNameResolver";
+import type { IdRef, Many2oneSchema } from "@/types/odooSchemas";
 
 function useAllResource(resourceName: Model, condition?: any[]) {
 	return useQuery({
@@ -13,7 +14,7 @@ function useAllResource(resourceName: Model, condition?: any[]) {
 	});
 }
 
-function useResourceById<T extends WithId>(resourceName: Model, idValue: string) {
+function useResourceById<T extends WithId>(resourceName: Model, idValue: IdRef) {
 	const queryClient = useQueryClient();
 	return useQuery({
 		queryKey: [resourceName, idValue],
@@ -44,7 +45,7 @@ function useCreateResource(resourceName: Model) {
 	return useMutation<any, Error, any, unknown>({
 		mutationFn: (resourceInstance) => ResourceService.create(resourceName, resourceInstance),
 		onSuccess: (data) => {
-			console.log(data);
+			console.log("[resource creation hook on success]", data);
 			queryClient.invalidateQueries({ queryKey: [resourceName] });
 		},
 	});
@@ -124,8 +125,18 @@ function useCreateMultipleResources(resourceName: Model) {
 
 function useUpdateResource(resourceName: Model) {
 	const queryClient = useQueryClient();
-	return useMutation<any, Error, { id: string; resourceInstance: any }, unknown>({
+	return useMutation<any, Error, { id: IdRef; resourceInstance: any }, unknown>({
 		mutationFn: ({ id, resourceInstance }) => ResourceService.updateById(resourceName, id, resourceInstance),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: [resourceName] });
+		},
+	});
+}
+
+function useUpdateManyResource(resourceName: Model) {
+	const queryClient = useQueryClient();
+	return useMutation<any, Error, { ids: IdRef[]; resourceInstances: any[] }, unknown>({
+		mutationFn: ({ ids, resourceInstances }) => ResourceService.updateManyById(resourceName, ids, resourceInstances),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: [resourceName] });
 		},
@@ -152,5 +163,6 @@ export {
 	useCreateMultipleResources,
 	//   useCreateMultipleFollowedResources,
 	useUpdateResource,
+    useUpdateManyResource,
 	useDeleteResource,
 };

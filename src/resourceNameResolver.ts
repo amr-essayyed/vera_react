@@ -59,7 +59,7 @@ const resourceNameResolver= {
 		modelName: "product.template",
 		fields: {
 			fields: productKeys,
-			// limit: 10,
+			limit: 10,
 		},
 	},
 	client: {

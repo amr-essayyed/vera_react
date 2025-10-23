@@ -23,7 +23,7 @@ export const router = createBrowserRouter([
         {path:'master-orders/:id', Component: MasterOrderDetailPage },
         {path:'master-orders/create', Component: MasterOrderCreatePage },
         {path:'purchase-orders', Component: PurchaseOrderPage },
-        {path:'purchase-orders/:id', Component: PurchaseOrderDetailPage },
+        {path:'purchase-orders/:id', Component: PurchaseOrderCreatePage },
         {path:'purchase-orders/create', Component: PurchaseOrderCreatePage },
         {path:'products', Component: ProductsPage },
         {path:'suppliers', Component: SuppliersPage },

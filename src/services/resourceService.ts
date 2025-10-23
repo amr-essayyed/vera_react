@@ -8,6 +8,7 @@ import resourceNameResolver, { type Model } from "@/resourceNameResolver.ts";
 import type { ApiResponse } from "../types/apiResponse.ts";
 import apiClient from "./apiClient.ts";
 import type { WithStringKeys } from "@/types/withStringKeyes.ts";
+import type { IdRef } from "@/types/odooSchemas.ts";
 
 // class RestResourceService {
 //     // C
@@ -156,13 +157,13 @@ class JsonRpcResourceService {
                     "create",
                     [
                         {
-                            ...resourceInstance,
                             [childField]: resourceInstance[childField].map( (childInstance:unknown) => (
                                 [
                                     0,0,
                                     childInstance
                                 ]
-                            ))
+                            )),
+                            ...resourceInstance
                         }
                     ]
                 ]
@@ -195,13 +196,13 @@ class JsonRpcResourceService {
                 "service": "object",
                 "method": "execute_kw",
                 "args": [
-                "veradb", // database name               
-                2,          // user id                    
-                "admin",    // 
-                serverResource.modelName,            
-                "search_read",               
-                [condition],
-                serverResource.fields
+                    "veradb", // database name               
+                    2,          // user id                    
+                    "admin",    // 
+                    serverResource.modelName,            
+                    "search_read",               
+                    [condition],
+                    serverResource.fields
                 ]
             },
             "id": 1
@@ -222,7 +223,7 @@ class JsonRpcResourceService {
         }
     }
 
-    static async getById(resourceName: Model, id: string) {
+    static async getById(resourceName: Model, id: IdRef) {
 
         const serverResource = resourceNameResolver[resourceName];
         
@@ -293,6 +294,40 @@ class JsonRpcResourceService {
             return response.parsedBody.result;
         }
     }
+    static async getManyByName(resourceName: Model, names: string[]) {
+
+        const serverResource = resourceNameResolver[resourceName];
+        
+        const body = {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+                "service": "object",
+                "method": "execute_kw",
+                "args": [
+                "veradb", 
+                2,                              
+                "admin",     
+                serverResource.modelName,            
+                "search_read",               
+                [[["name", "in", Array.isArray(names) ? names : [names]]]],
+                serverResource.fields
+                ]
+            },
+            "id": 1
+        };
+
+        const response: ApiResponse = await apiClient('jsonrpc', {method:"POST", body:JSON.stringify(body)});
+        if(! response.ok) {
+            throw new Error(response.errorMessage as string)
+        }else {
+            if(response.parsedBody.error){
+                
+                throw new Error(response.parsedBody.error.data.message as string)
+            }
+            return response.parsedBody.result;
+        }
+    }
     
     static async getByProp<T>(resourceName: Model, propName: string, propValue:T) {
         //! depends on the API = for now use query parameters of the search string
@@ -332,7 +367,7 @@ class JsonRpcResourceService {
     }
 
     // U
-    static async updateById<T>(resourceName: Model, id: string, resourceInstance: T) {
+    static async updateById<T>(resourceName: Model, id: IdRef, resourceInstance: T) {
         const serverResource = resourceNameResolver[resourceName];
         const body = {
             "jsonrpc": "2.0",
@@ -347,6 +382,78 @@ class JsonRpcResourceService {
                     serverResource.modelName,
                     "write",
                     [[id], resourceInstance]
+                ]
+            },
+            "id": 1
+        };
+        const response: ApiResponse = await apiClient('jsonrpc', {method: "POST", body: JSON.stringify(body)});
+        if (!response.ok) {
+            throw new Error(response.errorMessage as string);
+        } else {
+            if (response.parsedBody.error) {
+                throw new Error(response.parsedBody.error.data.message as string);
+            }
+            return response.parsedBody.result;
+        }
+    }
+    static async updateByIdWithChild(resourceName: Model, childField: string, resourceInstance: Record<string, WithStringKeys>) {
+        const serverResource = resourceNameResolver[resourceName];
+        const body = {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+                "service": "object",
+                "method": "execute_kw",
+                "args": [
+                    "veradb", // database name
+                    2, // user id
+                    "admin",
+                    serverResource.modelName,
+                    "write",
+                    [
+                        {
+                            [childField]: resourceInstance[childField].map( (childInstance:unknown) => (
+                                [
+                                    1,
+                                    0, //! id
+                                    childInstance
+                                ]
+                            )),
+                            ...resourceInstance
+                        }
+                    ]
+                ]
+            },
+            "id": 1
+        };
+        const response: ApiResponse = await apiClient('jsonrpc', {method: "POST", body: JSON.stringify(body)});
+        if (!response.ok) {
+            throw new Error(response.errorMessage as string);
+        } else {
+            if (response.parsedBody.error) {
+                throw new Error(response.parsedBody.error.data.message as string);
+            }
+            return response.parsedBody.result;
+        }
+    }
+
+    static async updateManyById<T>(resourceName: Model, ids: IdRef[], resourceInstances: T[]) {
+        const serverResource = resourceNameResolver[resourceName];
+        const body = {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+                "service": "object",
+                "method": "execute",
+                "args": [
+                    "veradb", // database name
+                    2, // user id
+                    "admin",
+                    ids.map( (id, index)=> [
+                        serverResource.modelName,
+                        "write",
+                        [[id], resourceInstances[index]]
+                    ])
                 ]
             },
             "id": 1

@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, Link, useParams } from "react-router-dom";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAllResource, useCreateMultipleResources, useCreateResource, useCreateResourceWithChild } from "@/hooks/useResource";
+import { useAllResource, useCreateMultipleResources, useCreateResource, useUpdateManyResource, useUpdateResource, /* useCreateResourceWithChild */ } from "@/hooks/useResource";
 import ItemsTable from "@/components/ItemsTable";
-import { purchaseOrderFormSchema, type tOrderLineCreate, type tPurchaseOrderForm } from "@/types/purchaseOrder";
+import { purchaseOrderFormSchema, type tOrderLineCreate, type tPurchaseOrder, type tPurchaseOrderForm } from "@/types/purchaseOrder";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, ShoppingCart, Save, AlertCircle } from "lucide-react";
@@ -14,37 +14,49 @@ import SupplierCreateDialog from "@/components/SupplierCreateDialog";
 import { toast } from "sonner";
 import AppSelectFormField from "@/components/AppSelectFormField";
 import AppInputFormField from "@/components/AppInputFormField";
-import type z from "zod";
+// import type z from "zod";
 import { normalizeDateFields } from "@/utils/dateUtils";
 import { useProducts } from "@/hooks/useOrderLines";
-import type { many2oneSchema } from "@/types/odooSchemas";
+import type { IdRef } from "@/types/odooSchemas";
+import ButtonPanel from "@/components/ButtonPanel";
+import { useQuery } from "@tanstack/react-query";
+import { ResourceService } from "@/services/resourceService";
+// import type { many2oneSchema } from "@/types/odooSchemas";
 
 export default function PurchaseOrderCreatePage() {
 	const navigate = useNavigate();
+    const {id} = useParams()
 	const [isSubmitting, setIsSubmitting] = useState(false);
+    // const [isOrder, setIsOrder] = useState(false);
+    var isOrder = id ? true : false;
+    var orderId: IdRef = parseInt(id||'') || null;
+    // const [orderId, setOrderId] = useState<IdRef>(parseInt(id||'') || null);
 
-	const { mutateAsync: mutatePurchaseOrder } = useCreateResource("purchaseOrder");
-	const { mutateAsync: mutatePurchaseOrderLine } = useCreateMultipleResources("purchaseOrderLine");
+	const { mutateAsync: createPurchaseOrder } = useCreateResource("purchaseOrder");
+    const {mutateAsync: updatePurchaseOrder} = useUpdateResource("purchaseOrder");
+	const { mutateAsync: createPurchaseOrderLine } = useCreateMultipleResources("purchaseOrderLine");
+	const { mutateAsync: updatePurchaseOrderLines } = useUpdateManyResource("purchaseOrderLine");
 	// const { mutateAsync: mutatePurchaseOrder } = useCreateResourceWithChild("purchaseOrder","order_line");
 
-    // const { onOrderLineFormSubmit } = useOrderLine('purchaseOrderLine')
-    const {createProducts} = useProducts();
-
-	// use query: getAll suppliers and products
-	// const { data: suppliers, isLoading: isSuppliersLoading, error: suppliersError } = useAllResource("contact" /* , [["supplier_rank", ">", 0]] */);
-	const contactState = useAllResource("contact" /* , [["customer_rank", ">", 0]] */);
 	const { data: products, isLoading: isProductsLoading, error: productsError } = useAllResource("product");
-
-	// Additional data for form fields
+	const contactState = useAllResource("contact" /* , [["customer_rank", ">", 0]] */);
 	const currencyState = useAllResource("currency");
-	// const { data: companies, isLoading: isCompaniesLoading, error: companiesError } = useAllResource("company");
 	const userState = useAllResource("user");
+	// const { data: companies, isLoading: isCompaniesLoading, error: companiesError } = useAllResource("company");
 	// const { data: pickingTypes, isLoading: isPickingTypesLoading, error: pickingTypesError } = useAllResource("pickingType");
 	// const { data: paymentTerms, isLoading: isPaymentTermsLoading, error: paymentTermsError } = useAllResource("paymentTerm");
 	// const { data: fiscalPositions, isLoading: isFiscalPositionsLoading, error: fiscalPositionsError } = useAllResource("fiscalPosition");
 	// const { data: incoterms, isLoading: isIncotermsLoading, error: incotermsError } = useAllResource("incoterm");
 
-	const purchaseOrderForm = useForm({
+    const {data:PO} = useQuery<unknown,Error,tPurchaseOrder>({
+        queryKey: ["purchaseOrder", orderId],
+        queryFn: () => ResourceService.getById("purchaseOrder", orderId),
+        enabled: !!orderId, // Only run the query if orderId is not null
+    })
+    
+    const {createProducts} = useProducts();
+
+	const form = useForm({
 		resolver: zodResolver(purchaseOrderFormSchema),
 		defaultValues: {
 			state: "draft",
@@ -53,34 +65,46 @@ export default function PurchaseOrderCreatePage() {
 		},
 	});
 
-	// const purchaseOrderLineForm = useForm({
-	// 	resolver: zodResolver(purchaseOrderLineFormSchema)
-	// });
+    useEffect(() => {
+        form.reset(PO); // user has { id, name, email }
+    }, [PO, form.reset]);
 
-    // var purchaseOrderIdGlobal: z.infer<typeof many2oneSchema>;
 	// Submit handler
-	const onPurchaseOrderFormSubmit = async (values: tPurchaseOrderForm) => {
-        console.log("PO Form values:", values);
+	const onFormSubmit = async (formData: tPurchaseOrderForm) => {
+        console.log("PO Form values:", formData);
 
         setIsSubmitting(true);
         try {
-            const lines = await createProducts(values.order_line, products);
-            // const purchaseOrderCreate =  {...values, order_line: lines}
-            const purchaseOrderCreate =  {...values, order_line: null}
-            const purchaseOrderData = normalizeDateFields(purchaseOrderCreate);
+            const lines = await createProducts(formData.order_line, products);
+            const {order_line, ...purchaseOrderCreate} = formData
 
-            // Create PO
+            const purchaseOrderData = normalizeDateFields(purchaseOrderCreate);
+            // if (!isOrder){
+            //* Create PO
             console.log("[purchaseOrderData]: ", purchaseOrderData);
-            const createdPurchaseOrder = await mutatePurchaseOrder(purchaseOrderData);
+            var createdPurchaseOrder = await createPurchaseOrder(purchaseOrderData);
             console.log("[createdPurchaseOrder]: ", createdPurchaseOrder);
             
-            // Create PO Lines
+            orderId = createdPurchaseOrder // setOrderId(createdPurchaseOrder);
+            console.log("[orderId]", orderId);
+            
+            //* Create PO Lines
             const purchaseOrderLineData = lines.map((line: tOrderLineCreate) => {
                 return {...line, order_id: createdPurchaseOrder};
             });
+            await createPurchaseOrderLine(purchaseOrderLineData);
+            
+            // }
+            // else if (isOrder) {
+            //     const updatedPurchaseOrder = await updatePurchaseOrder({id: orderId, resourceInstance: purchaseOrderData});
+            //     const purchaseOrderLineData = lines.map((line: tOrderLineCreate) => {
+            //         return {...line, order_id: orderId};
+            //     });
+                
+            //     await updatePurchaseOrderLine(purchaseOrderLineData);
+            // }
 
-            await mutatePurchaseOrderLine(purchaseOrderLineData);
-
+            navigate(`/purchase-orders/${createdPurchaseOrder}`);
 
             // Extract the ID from the response - it might be just the number or in a different property
             // const purchaseOrderId = createdPurchaseOrder.id || createdPurchaseOrder || (typeof createdPurchaseOrder === "number" ? createdPurchaseOrder : null);
@@ -93,10 +117,47 @@ export default function PurchaseOrderCreatePage() {
             console.error("error: ", error);
         } finally {
             setIsSubmitting(false);
+            isOrder = true//setIsOrder(true);
             toast.success("Purchase order created successfully!");
+
         }
         // purchaseOrderIdGlobal = purchaseOrderId;
 	};
+
+    const onFormSave = async (formData: tPurchaseOrderForm) => {
+        console.log("FormData: ", formData);
+
+        setIsSubmitting(true);
+        try {
+            console.log("[on edit]");
+            
+            // const lines = await createProducts(formData.order_line, products);
+            // const {order_line, ...purchaseOrderCreate} = formData
+
+            // const purchaseOrderData = normalizeDateFields(purchaseOrderCreate);
+            //* Update PO
+            // console.log("[purchaseOrderData]: ", purchaseOrderData);
+            // await updatePurchaseOrder({id: orderId, resourceInstance: purchaseOrderData});            
+            // console.log("[orderId]", orderId);
+            
+            //* Update PO Lines
+            // const purchaseOrderLineData = lines.map( (line: tOrderLineCreate) => ({...line, order_id: orderId}) );
+            // await updatePurchaseOrderLines({ids:PO?.order_line, resourceInstances: purchaseOrderLineData});
+
+        } catch (error) {
+            toast.error("Failed to save form. Please try again.");
+            console.error("[Submit Error]: ", error);
+        } finally {
+            setIsSubmitting(false);
+            toast.success("Purchase order Updated successfully!");
+
+        }
+        // purchaseOrderIdGlobal = purchaseOrderId;
+
+        
+    }
+
+    const onSubmit = isOrder? onFormSave: onFormSubmit;
 
     // async function handleSaveForms() {
     //     console.log('handle Save forms');
@@ -130,7 +191,7 @@ export default function PurchaseOrderCreatePage() {
 	const handleSupplierCreated = (newSupplier: any) => {
 		// Refresh suppliers data would be ideal, but for now we can set the form value
 		const supplierId = newSupplier.id || newSupplier;
-		purchaseOrderForm.setValue("partner_id", supplierId);
+		form.setValue("partner_id", supplierId);
 		console.log("New supplier created:", newSupplier);
 	};
 
@@ -141,12 +202,9 @@ export default function PurchaseOrderCreatePage() {
 				<div className="max-w-6xl mx-auto px-4 py-6">
 					<div className="flex items-center justify-between">
 						<div className="flex items-center space-x-4">
-							<Link to="/purchase-orders">
-								<Button variant="ghost" size="sm">
-									<ArrowLeft className="h-4 w-4 mr-2" />
-									Back to Purchase Orders
-								</Button>
-							</Link>
+							<Link to="/purchase-orders"><Button variant="ghost" size="sm">
+								<ArrowLeft className="h-4 w-4 mr-2" />Back to Purchase Orders
+                            </Button></Link>
 							<div className="flex items-center space-x-3">
 								<div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
 									<ShoppingCart className="h-5 w-5 text-blue-600" />
@@ -190,12 +248,20 @@ export default function PurchaseOrderCreatePage() {
 				)}
 			</div>
 
+            <div className="max-w-6xl mx-auto px-4 pb-6">
+                <ButtonPanel
+                    orderId={orderId} />
+            </div>
+
 			{/* Form */}
 			<div className="max-w-6xl mx-auto px-4 pb-6">
-				<Form {...purchaseOrderForm}>
+				<Form {...form}>
 					{/* Field Information Alert */}
 
-					<form onSubmit={purchaseOrderForm.handleSubmit(onPurchaseOrderFormSubmit)} className="space-y-6">
+					<form 
+                        onSubmit={form.handleSubmit(onSubmit)} 
+                        className="space-y-6"
+                    >
 						{/* Order Information */}
 						<Card>
 							<CardHeader>
@@ -204,14 +270,14 @@ export default function PurchaseOrderCreatePage() {
 							<CardContent className="space-y-4">
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <AppSelectFormField 
-                                        formControl={purchaseOrderForm.control}
+                                        formControl={form.control}
                                         name="partner_id"
                                         label="supplier"
                                         resourceState={contactState}
                                         createNew={<SupplierCreateDialog onSupplierCreated={handleSupplierCreated} />}
                                     />
 									<AppSelectFormField
-                                        formControl={purchaseOrderForm.control}
+                                        formControl={form.control}
                                         name="customer_id"
                                         label="customer"
                                         resourceState={contactState}
@@ -238,20 +304,20 @@ export default function PurchaseOrderCreatePage() {
                                         type='date'
                                     /> */}
                                     <AppInputFormField
-                                        formControl={purchaseOrderForm.control}
+                                        formControl={form.control}
                                         name="date_planned"
                                         label="Expected Delivery Date"
                                         type="datetime-local"
                                     />
 								
                                     <AppInputFormField
-                                        formControl={purchaseOrderForm.control}
+                                        formControl={form.control}
                                         name="partner_ref"
                                         label="Supplier Reference"
                                         type="text"  
                                     />
                                     <AppSelectFormField
-                                        formControl={purchaseOrderForm.control}
+                                        formControl={form.control}
                                         name="currency_id"
                                         label="Currency"
                                         resourceState={currencyState}
@@ -281,7 +347,7 @@ export default function PurchaseOrderCreatePage() {
                                         resourceState={incotermState}
                                     /> */}
                                         <AppSelectFormField
-                                            formControl={purchaseOrderForm.control}
+                                            formControl={form.control}
                                             name="order_status"
                                             label="Order Status"
                                             options={[
@@ -291,34 +357,8 @@ export default function PurchaseOrderCreatePage() {
                                                 ["delivered", "Delivered"],
                                             ]}
                                         />
-                                        {/* <FormField
-                                            control={form.control}
-                                            name="shipping_status"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <Label>Shipping Status</Label>
-                                                    <FormControl>
-                                                        <Input {...field} placeholder="Shipping status (optional)" />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="payment_status"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <Label>Payment Status</Label>
-                                                    <FormControl>
-                                                        <Input {...field} placeholder="Payment status (optional)" />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        /> */}
                                         <AppSelectFormField
-                                            formControl={purchaseOrderForm.control}
+                                            formControl={form.control}
                                             name="invoice_status"
                                             label="Invoice Status"
                                             options={[
@@ -332,7 +372,7 @@ export default function PurchaseOrderCreatePage() {
                                     <br />
                                     <CardTitle>Order Items (Optional)</CardTitle>
                                     <div>
-                                        <ItemsTable form={purchaseOrderForm} isLoading={isLoading} />
+                                        <ItemsTable form={form} isLoading={isLoading} />
 
                                         {/* Order Summary */}
                                         {/* <div className="mt-6 pt-4 border-t">
@@ -384,7 +424,7 @@ export default function PurchaseOrderCreatePage() {
                                 ) : (
                                     <>
                                         <Save className="h-4 w-4 mr-2" />
-                                        Create Purchase Order
+                                        Save
                                     </>
                                 )}
                             </Button>
