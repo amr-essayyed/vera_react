@@ -15,6 +15,8 @@ import SupplierCreatePage from "./pages/SupplierCreatePage";
 import SalesOrderLinePage from "./pages/SalesOrderLinePage";
 import SalesOrderLinePageDetails from "./pages/SalesOrderLinePageDetails";
 import SalesOrderCreatePage from "./pages/SalesOrderCreatePage";
+import PurchaseOrderEditPage from "./pages/PurchaseOrderEditPage";
+import BillCreatePage from "./pages/BillCreatePage";
 
 export const router = createBrowserRouter([
     { path: '/', Component: App, children: [
@@ -23,7 +25,7 @@ export const router = createBrowserRouter([
         {path:'master-orders/:id', Component: MasterOrderDetailPage },
         {path:'master-orders/create', Component: MasterOrderCreatePage },
         {path:'purchase-orders', Component: PurchaseOrderPage },
-        {path:'purchase-orders/:id', Component: PurchaseOrderCreatePage },
+        {path:'purchase-orders/:id', Component: PurchaseOrderEditPage },
         {path:'purchase-orders/create', Component: PurchaseOrderCreatePage },
         {path:'products', Component: ProductsPage },
         {path:'suppliers', Component: SuppliersPage },
@@ -32,6 +34,7 @@ export const router = createBrowserRouter([
         { path: 'sales', Component: SalesOrderLinePage },
         { path: 'sales/:id', Component: SalesOrderLinePageDetails },
         { path: 'sales/create', Component: SalesOrderCreatePage },
+        { path: 'bills', Component: BillCreatePage},
         {path:'*', Component: NotFoundPage },
     ] },
     {path:'*', Component: NotFoundPage }

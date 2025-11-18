@@ -7,6 +7,8 @@ export const many2oneSchema = z.union([
     z.literal(false), // Odoo returns false for empty many2one fields
 ]);
 
+export const many2oneReadSchema = z.tuple([z.number().int().positive(), z.string()]); // [id, name] format
+
 /** Many2many / one2many as an array of ids or array of { id, name } */
 export const many2manySchema = z.array(many2oneSchema);
 
@@ -22,6 +24,7 @@ export const idRefList = z.union([
 
 
 export type Many2oneSchema = z.infer<typeof many2oneSchema>;
+export type Many2oneRead = z.infer<typeof many2oneReadSchema>;
 export type  Many2manySchema = z.infer<typeof many2manySchema>;
 export type IdRef = z.infer<typeof idRef>;
 export type IdRefList = z.infer<typeof idRefList>;

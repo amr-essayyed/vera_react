@@ -8,6 +8,7 @@ interface tProps {
     name: string;
     label: string;
     type?: string;
+    defaultValue?: any;
 }
 
 export default function AppInputFormField({
@@ -15,6 +16,7 @@ export default function AppInputFormField({
     name,
     label,
     type='text',
+    defaultValue
 }: tProps) {
     return (
         <FormField
@@ -24,7 +26,7 @@ export default function AppInputFormField({
                 <FormItem>
                     <Label>{startCase(label)}</Label>
                         <FormControl>
-                            <Input { ...field} type={type} placeholder={`Enter ${startCase(label)}`} />
+                            <Input defaultValue={defaultValue || undefined} { ...field} type={type} placeholder={`Enter ${startCase(label)}`} />
                         </FormControl>
                     <FormMessage />
                 </FormItem>

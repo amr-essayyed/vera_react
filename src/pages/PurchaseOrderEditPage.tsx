@@ -22,9 +22,17 @@ import { ArrowLeft, ShoppingCart, Save, AlertCircle } from "lucide-react";
 // import { useQuery } from "@tanstack/react-query";
 // import { ResourceService } from "@/services/resourceService";
 import PurchaseOrderForm from "@/components/PurchaseOrderForm";
+import { useResourceById } from "@/hooks/useResource";
 // import type { many2oneSchema } from "@/types/odooSchemas";
 
-export default function PurchaseOrderCreatePage() {
+export default function PurchaseOrderEditPage() {
+    const {id} = useParams()
+    // var purchaseOrder
+    if  (id) {
+        var {data: purchaseOrder} = useResourceById("purchaseOrder", parseInt(id));
+    }else{
+        purchaseOrder = null
+    }
 
 	return (
 		<div className="min-h-screen bg-gray-50 dark:bg-black">
@@ -50,7 +58,7 @@ export default function PurchaseOrderCreatePage() {
 				</div>
 			</div>
 
-            <PurchaseOrderForm />
+            {purchaseOrder && <PurchaseOrderForm purchaseOrder={purchaseOrder[0]} />}
 		</div>
 	);
 }

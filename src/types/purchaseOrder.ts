@@ -33,7 +33,7 @@
     - invoice_count: Number of vendor bills created
 */
 import { z } from "zod";
-import { many2oneSchema } from "./odooSchemas";
+import { many2oneReadSchema, many2oneSchema } from "./odooSchemas";
 
 /** Common enums from purchase.order */
 export const purchaseStateEnum = z.enum([
@@ -94,7 +94,7 @@ export const purchaseOrderSchema = z.object({
 	name: z.string().optional(), // PO number
 	partner_id: many2oneSchema, // Vendor
 	partner_ref: z.union([z.string(), z.literal(false)]).optional(), // Vendor reference
-	customer_id: many2oneSchema.optional(),
+	customer_id: z.number().int().positive().optional(),
 	order_status: orderStatusEnum.default("pending"),
 	shipping_status: z.string().optional(),
 	payment_status: z.string().optional(),
@@ -126,6 +126,32 @@ export const purchaseOrderSchema = z.object({
 	notes: z.string().optional(), // terms/notes
 });
 
+export const purchaseOrderReadSchema = z.object({
+	id: z.number().int().positive().optional(),
+	name: z.string().optional(), // PO number
+    state: purchaseStateEnum.optional().default("draft"),
+	user_id: many2oneReadSchema.optional(), // Buyer
+	
+    partner_id: many2oneReadSchema, // Vendor
+	partner_ref: z.union([z.string(), z.literal(false)]).optional(), // Vendor reference
+	customer_id: many2oneReadSchema.optional(),
+	company_id: many2oneReadSchema.optional(),
+	
+    order_status: orderStatusEnum.default("pending"),
+	invoice_status: invoiceStatusEnum.optional().default("to invoice"),
+	payment_term_id: many2oneSchema.optional(),
+	currency_id: many2oneReadSchema.optional(),
+
+
+	date_order: z.union([z.string(), z.literal(false)]).optional(), // ISO datetime or false
+	date_approve: z.union([z.string(), z.literal(false)]).optional(), // ISO datetime or false
+	date_planned: z.union([z.string(), z.literal(false)]), // ISO datetime or false
+
+	order_line: z.array(z.number().int().positive()).default([]), // Array of line IDs
+	amount_total: z.number().optional(), // computed by Odoo
+
+});
+
 
 /** Form schema for purchase order creation - includes all relevant fields */
 export const purchaseOrderFormSchema = purchaseOrderSchema.pick({
@@ -144,7 +170,7 @@ export const purchaseOrderFormSchema = purchaseOrderSchema.pick({
 
 export type tPurchaseOrderForm = z.infer<typeof purchaseOrderFormSchema>;
 export type tPurchaseOrder = z.infer<typeof purchaseOrderSchema>;
-
+export type tPurchaseOrderRead = z.infer<typeof purchaseOrderReadSchema>;
 
 export type tOrderLineForm = z.infer<typeof orderLineFormSchema>;
 export type tOrderLineCreate = z.infer<typeof orderLineCreateSchema>;

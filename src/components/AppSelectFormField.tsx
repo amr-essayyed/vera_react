@@ -6,12 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import type { ReactElement } from "react";
 
 interface tProps {
-    formControl: any;
+    formControl?: any;
     name: string;
     label: string;
     resourceState?: UseQueryResult<[]>;
     options?: any[];
     createNew?: ReactElement;
+    defaultValue?: any;
 }
 
 export default function AppSelectFormField({
@@ -21,6 +22,7 @@ export default function AppSelectFormField({
     resourceState,
     options,
     createNew,
+    defaultValue
 }: tProps) {
     return (
         <FormField
@@ -31,7 +33,11 @@ export default function AppSelectFormField({
                     <Label>{startCase(label)}</Label>
                     <div className="flex gap-2">                    
                         <FormControl>
-                            <Select onValueChange={ resourceState? (val) => field.onChange(JSON.parse(val)) : field.onChange} value={field.value ? (resourceState? JSON.stringify(field.value):field.value) : ""} disabled={resourceState?.isLoading}>
+                            <Select 
+                                // defaultValue={defaultValue || undefined}    
+                                onValueChange={ resourceState? (val) => field.onChange(JSON.parse(val)) : field.onChange} 
+                                value={field.value ? (resourceState? JSON.stringify(field.value):field.value) : ""} disabled={resourceState?.isLoading}
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder={resourceState?.isLoading ? `Loading ${startCase(label)}...` : `Select ${startCase(label)}`} />
                                 </SelectTrigger>

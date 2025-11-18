@@ -140,8 +140,7 @@ class JsonRpcResourceService {
 
     static async createWithChild(resourceName: Model, childField: string, resourceInstance: Record<string, WithStringKeys>) {
         const serverResource = resourceNameResolver[resourceName];
-        console.log("chli", resourceInstance[childField]);
-        console.log("chli", resourceInstance.childField);
+        console.log("childField: ", childField);
         
         const body = {
             "jsonrpc": "2.0",
@@ -157,19 +156,23 @@ class JsonRpcResourceService {
                     "create",
                     [
                         {
+                            ...resourceInstance,
                             [childField]: resourceInstance[childField].map( (childInstance:unknown) => (
                                 [
                                     0,0,
                                     childInstance
                                 ]
                             )),
-                            ...resourceInstance
+
                         }
                     ]
                 ]
             },
             "id": 1
         };
+
+        console.log("[body]: ", body);
+        
 
         const response: ApiResponse = await apiClient('jsonrpc', {method: "POST", body: JSON.stringify(body)});
         

@@ -1,10 +1,11 @@
 import { useAllResource } from "@/hooks/useResource";
 import LoadingSubPage from "./LoadingSubPage";
 import type { WithId } from "@/types/withId";
+import type { Model } from "@/resourceNameResolver";
 
 type ResourceTableProps = {
 	ResourceRow: React.ComponentType<any>;
-	resourceName: string;
+	resourceName: Model;
     condition?: any[];
 	columns: string[];
 };

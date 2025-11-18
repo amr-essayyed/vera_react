@@ -1,3 +1,4 @@
+import { kBill } from "./types/bill";
 import { currencyKeys } from "./types/currency";
 import { productKeys } from "./types/product";
 import { purchaseOrderKeys, purchaseOrderLineKeys } from "./types/purchaseOrder";
@@ -60,6 +61,7 @@ const resourceNameResolver= {
 		fields: {
 			fields: productKeys,
 			limit: 10,
+            offset: 0,
 		},
 	},
 	client: {
@@ -130,6 +132,14 @@ const resourceNameResolver= {
 		modelName: "res.currency",
 		fields: {fields: currencyKeys},
 	},
+    bill: {
+        modelName: "account.move",
+        fields: {
+            fields: kBill,
+            // limit: 10,
+            // offset: 0
+        }
+    }
 
 };
 
