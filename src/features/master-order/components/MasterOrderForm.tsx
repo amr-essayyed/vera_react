@@ -1,23 +1,22 @@
+// Todo: make a component for select> it needs to take a model to fetch its data in infinite scroll mode. and to enable searching in server.
+// todo: make a validation function for master order
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
-import { Field, FieldError, FieldGroup, FieldLabel } from "./ui/field";
-import { Button } from "./ui/button";
 import { Save } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useCreateResourceWithChild } from "@/hooks/useResource";
 import { toast } from "sonner";
-import { tf_Bill, type tc_Bill } from "@/types/bill";
-import { Input } from "./ui/input";
 import { validateBill } from "@/validators/validateBill";
 import { cn } from "@/lib/utils";
 import { isEmpty } from "lodash";
 import qs from "qs";
-import BillFormTable from "./BillFormTable";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Button } from "@/components/ui/button";
+import type { tc_MasterOrder, tf_MasterOrder } from "@/types/masterOrder";
 
-export default function BillForm(): React.ReactElement | null {
+export default function MasterOrderForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<any>(null);
-    // const {mutateAsync: createBill} = useCreateResource("bill");
-    const {mutateAsync: createBill} = useCreateResourceWithChild("bill", "invoice_line_ids");
+    const {mutateAsync: createMasterOrder} = useCreateResourceWithChild("masterOrder", "invoice_line_ids");
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -26,11 +25,12 @@ export default function BillForm(): React.ReactElement | null {
         setIsSubmitting(true);
         const formData = new FormData(e.target as HTMLFormElement);
         const queryString = new URLSearchParams(formData as any).toString();
-        const formEntries = qs.parse(queryString) as unknown as tf_Bill;
+        const formEntries = qs.parse(queryString) as unknown as tf_MasterOrder;
         console.log("[handleSubmit]formEntries: ", formEntries);
         
         //* validate
-        const validationErrors = validateBill(formEntries);
+        const validationErrors = validateMasterOrder(formEntries); // const validationErrors = validateBill(formEntries);
+        
         setErrors(validationErrors);
         console.log("validationErrors", validationErrors);
         
@@ -40,23 +40,23 @@ export default function BillForm(): React.ReactElement | null {
         }
 
         // //* prepare
-        const newBill: tc_Bill = {
-            "move_type": "in_invoice",
-            "partner_id": parseInt(formEntries.partner_id as string), 
-            "ref": formEntries.ref as string || undefined,
-            "invoice_date": new Date(formEntries.invoice_date as string) || undefined,
-            "invoice_line_ids": formEntries.invoice_line_ids,
+        const newMasterOrder: tc_MasterOrder = {
+            // "move_type": "in_invoice",
+            // "partner_id": parseInt(formEntries.partner_id as string), 
+            // "ref": formEntries.ref as string || undefined,
+            // "invoice_date": new Date(formEntries.invoice_date as string) || undefined,
+            // "invoice_line_ids": formEntries.invoice_line_ids,
         }
-        console.log("[submitting]: ", newBill);
+        console.log("[submitting]: ", newMasterOrder);
 
         //* send create request
-        createBill(newBill)
+        createMasterOrder(newMasterOrder)
             .then((res) => {
                 console.log("[submit success]", res);
-                toast.success("Bill created successfully");
+                toast.success("Master Order created successfully");
             }).catch((err) => {
                 console.log("[submit fail]",err);
-                toast.error("Failed to create bill");
+                toast.error("Failed to create Master Order");
             });
         
         setIsSubmitting(false);
@@ -66,38 +66,20 @@ export default function BillForm(): React.ReactElement | null {
         <form onSubmit={handleSubmit}>
             <FieldGroup>
                 <Field>
-                    <FieldLabel>Vendor</FieldLabel>
-                    <Select name="partner_id">
-                        <SelectTrigger className={cn(`w-[180px]`, errors?.partner_id && "border-red-500")}>
-                            <SelectValue placeholder="Select a vendor" />
+                    <FieldLabel>Client</FieldLabel>
+                    <Select name="client_id">
+                        <SelectTrigger className={cn(`w-[180px]`, errors?.client_id && "border-red-500")}>
+                            <SelectValue placeholder="Select a Client" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="12">Apple</SelectItem>
                             <SelectItem value="11">golde sama</SelectItem>
                         </SelectContent>
                     </Select>
-                    <FieldError>{errors?.partner_id}</FieldError>
+                    <FieldError>{errors?.client_id}</FieldError>
                 </Field>
 
-                <Field>
-                    <FieldLabel>Bill Reference</FieldLabel>
-                    <Input type="text" name="ref" className={cn(errors?.ref && "border-red-500")} />
-                    <FieldError>{errors?.ref && errors.ref}</FieldError>
-                </Field>
-                
-                <Field>
-                    <FieldLabel>Bill Date</FieldLabel>
-                    <Input type="date" name="invoice_date" className={cn(errors?.invoice_date && "border-red-500")} max={new Date().toISOString().split("T")[0]}/>
-                    <FieldError>{errors?.invoice_date}</FieldError>
-                </Field>
-                
-                <Field>
-                    <FieldLabel>Invoice Lines</FieldLabel>
-                    <BillFormTable
-                        fields={["product_id", "quantity", "price_unit"]}
-                    />
-                    
-                </Field>
+
                 
                 <Field orientation="horizontal">
                     <Button

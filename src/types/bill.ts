@@ -4,7 +4,7 @@ export class tf_Bill {
     "partner_id": string;
     "ref"?: string;
     "invoice_date"?: string;
-    "invoice_line_ids"?: []
+    "invoice_line_ids"?: [];
 }
 
 export class tc_Bill {
@@ -12,7 +12,7 @@ export class tc_Bill {
     "partner_id": number;
     "ref"?: string | undefined;
     "invoice_date"?: Date | undefined;
-    "invoice_line_ids"?: []
+    "invoice_line_ids"?: [];
 }
 
 

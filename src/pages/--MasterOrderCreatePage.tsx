@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
-export default function MasterOrderCreatePage() {
+export default function __MasterOrderCreatePage() {
 	const { mutateAsync: mutatemasterOrder } = useCreateResource("masterOrder");
 	const { mutateAsync: mutatemasterOrderLine } = useCreateMultipleResources("masterOrderLine");
 	const { mutateAsync: mutateProduct } = useCreateMultipleResources("product");
