@@ -10,8 +10,9 @@ import { Input } from "./ui/input";
 import { validateBill } from "@/validators/validateBill";
 import { cn } from "@/lib/utils";
 import { isEmpty } from "lodash";
-import qs from "qs";
+// import qs from "qs";
 import BillFormTable from "./BillFormTable";
+import { assignNestedValue } from "@/lib/formParsing";
 
 export default function BillForm(): React.ReactElement | null {
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,8 +26,12 @@ export default function BillForm(): React.ReactElement | null {
         //* get data of the form
         setIsSubmitting(true);
         const formData = new FormData(e.target as HTMLFormElement);
-        const queryString = new URLSearchParams(formData as any).toString();
-        const formEntries = qs.parse(queryString) as unknown as tf_Bill;
+        // const queryString = new URLSearchParams(formData as any).toString();
+        // const formEntries = qs.parse(queryString) as unknown as tf_Bill;
+         const formEntries: any = {};
+        for (const [key, value] of formData.entries()) {
+            assignNestedValue(formEntries, key, value);
+        }
         console.log("[handleSubmit]formEntries: ", formEntries);
         
         //* validate
