@@ -16,12 +16,13 @@ import SalesOrderLinePageDetails from "./pages/SalesOrderLinePageDetails";
 import SalesOrderCreatePage from "./pages/SalesOrderCreatePage";
 import PurchaseOrderEditPage from "./pages/PurchaseOrderEditPage";
 import BillCreatePage from "./pages/BillCreatePage";
+import MasterOrderEditPage from "./features/master-order/pages/MasterOrderEditPage";
 
 export const router = createBrowserRouter([
     { path: '/', Component: App, children: [
         {path: 'dashboard', Component: DashboardPage},
         {path:'master-orders', Component: MasterOrderPage },
-        // {path:'master-orders/:id', Component: MasterOrderDetailPage },
+        {path:'master-orders/:id', Component: MasterOrderEditPage },
         {path:'master-orders/create', Component: MasterOrderCreatePage },
         {path:'purchase-orders', Component: PurchaseOrderPage },
         {path:'purchase-orders/:id', Component: PurchaseOrderEditPage },

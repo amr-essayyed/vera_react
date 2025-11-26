@@ -1,0 +1,1 @@
+export const odooDatetimeFormat = (jsDatetime: string) => new Date(jsDatetime).toISOString().slice(0, 19).replace('T', ' ')

@@ -1,9 +1,10 @@
-import type { tf_MasterOrderLine, tu_MasterOrderLine } from "./masterOrderLine";
+import type { tc_MasterOrderLine, tf_MasterOrderLine, tu_MasterOrderLine } from "./masterOrderLine";
 
 export class tf_MasterOrder {
     "project_name": string;
     "client_id": number;
     "date_order": string;
+    "date_expected": string;
     "virtual_inventory": boolean;
     "shipper_id": number;
     "shipping_cost": number;
@@ -17,15 +18,16 @@ export class tf_MasterOrder {
 export class tc_MasterOrder {
     "project_name": string;
     "client_id": number;
-    "date_order": string;
-    "virtual_inventory": boolean;
-    "shipper_id": number;
-    "shipping_cost": number;
-    "shipping_charge": number;
-    "currency_id": number;
-    "commission_rate": number;
-    "auto_sync_documents": number;
-    "line_ids": tf_MasterOrderLine[];
+    "date_order"?: string;
+    "date_expected"?: string;
+    "virtual_inventory"?: boolean;
+    "shipper_id"?: number;
+    "shipping_cost"?: number;
+    "shipping_charge"?: number;
+    "currency_id"?: number;
+    "commission_rate"?: number;
+    "auto_sync_documents"?: number;
+    "line_ids"?: tc_MasterOrderLine[];
 }
 
 export class tr_MasterOrder {
@@ -33,14 +35,15 @@ export class tr_MasterOrder {
     "name": string;
     "stage_id": number;
     "project_name": string;
-    "client_id": number;
+    "client_id": [number, string];
     "date_order": string;
+    "date_expected": string;
     "virtual_inventory": boolean;
     "shipper_id": number;
     "shipping_cost": number;
     "shipping_charge": number;
     "shipping_margin": number;
-    "currency_id": number;
+    "currency_id": [number, string];
     "commission_rate": number;
     "amount_profit": number;
     "po_created": boolean;
@@ -54,12 +57,14 @@ export class tr_MasterOrder {
     "amount_sale": number;
     "line_ids": number[];
 }
+export const MasterOrderFields = Object.keys(new tr_MasterOrder());
 
 export class tu_MasterOrder {
     "stage_id": number;
     // "project_name": string;
     // "client_id": number;
     // "date_order": string;
+    "date_expected": string;
     "virtual_inventory": boolean;
     "shipper_id": number;
     "shipping_cost": number;

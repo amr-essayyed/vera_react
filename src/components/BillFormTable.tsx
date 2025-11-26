@@ -5,7 +5,7 @@ import { Button } from './ui/button';
 import { Select } from './ui/select';
 import AppSelectField from './AppSelectField';
 import { useAllResource } from '@/hooks/useResource';
-import type { tProductRead } from '@/types/product';
+import type { tr_Product } from '@/types/product';
 
 interface Props extends React.HtmlHTMLAttributes<HTMLTableElement> {fields: string []};
 
@@ -20,7 +20,7 @@ export default function BillFormTable({fields}: Props) {
                 <AppSelectField 
                     name={`invoice_line_ids[${i}][product_id]`}
                     label="Product"
-                    values={productState.data?.map((p:tProductRead)=> ({value: p.product_variant_id[0], label: p.product_variant_id[1]}) )}
+                    values={productState.data?.map((p:tr_Product)=> ({value: p.product_variant_id[0], label: p.product_variant_id[1]}) )}
                     isLoading={productState.isLoading}
 
                 />

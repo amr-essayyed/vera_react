@@ -297,6 +297,7 @@ class JsonRpcResourceService {
             return response.parsedBody.result;
         }
     }
+
     static async getManyByName(resourceName: Model, names: string[]) {
 
         const serverResource = resourceNameResolver[resourceName];
@@ -314,6 +315,41 @@ class JsonRpcResourceService {
                 serverResource.modelName,            
                 "search_read",               
                 [[["name", "in", Array.isArray(names) ? names : [names]]]],
+                serverResource.fields
+                ]
+            },
+            "id": 1
+        };
+
+        const response: ApiResponse = await apiClient('jsonrpc', {method:"POST", body:JSON.stringify(body)});
+        if(! response.ok) {
+            throw new Error(response.errorMessage as string)
+        }else {
+            if(response.parsedBody.error){
+                
+                throw new Error(response.parsedBody.error.data.message as string)
+            }
+            return response.parsedBody.result;
+        }
+    }
+    
+    static async getManyByProp(resourceName: Model, propName: string, values: unknown[]) {
+
+        const serverResource = resourceNameResolver[resourceName];
+        
+        const body = {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+                "service": "object",
+                "method": "execute_kw",
+                "args": [
+                "veradb", 
+                2,                              
+                "admin",     
+                serverResource.modelName,            
+                "search_read",               
+                [[[propName, "in", Array.isArray(values) ? values : [values]]]],
                 serverResource.fields
                 ]
             },

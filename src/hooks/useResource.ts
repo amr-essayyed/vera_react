@@ -16,12 +16,12 @@ function useAllResource(resourceName: Model, condition?: any[]) {
 
 function useResourceById<T extends WithId>(resourceName: Model, idValue: IdRef) {
 	const queryClient = useQueryClient();
-	return useQuery({
+	return useQuery<T>({
 		queryKey: [resourceName, idValue],
-		queryFn: async () => await ResourceService.getById(resourceName, idValue),
+		queryFn: async () => (await ResourceService.getById(resourceName, idValue))[0],
 		initialData: () => {
 			const resourceData = queryClient.getQueryData<T[]>([resourceName]);
-			const data: T | undefined = resourceData?.find((d) => String(d.id) === String(idValue));
+			const data = resourceData?.find((d) => String(d.id) === String(idValue));
 			return data;
 		},
 	});
@@ -36,6 +36,31 @@ function useResourceByProp<T>(resourceName: Model, propName: string, propValue: 
 			const data = queryClient.getQueryData<any[]>([resourceName]);
 			return data?.find((d) => d[propName] === propValue);
 		},
+	});
+}
+
+function useManyResourceByName<T>(resourceName: Model, names: string[]) {
+	const queryClient = useQueryClient();
+	return useQuery({
+		queryKey: [resourceName, "name",  names],
+		queryFn: async () => await ResourceService.getManyByName(resourceName, names),
+		initialData: () => {
+			const data = queryClient.getQueryData<any[]>([resourceName]);
+			return data?.filter((d) => d["name"] in names);
+		},
+	});
+}
+
+function useManyResourceByProp<T>(resourceName: Model, propName:string , values: unknown[], dependency: any) {
+	const queryClient = useQueryClient();
+	return useQuery({
+		queryKey: [resourceName, propName, values],
+		queryFn: async () => await ResourceService.getManyByProp(resourceName, propName, values),
+		initialData: () => {
+			const data = queryClient.getQueryData<any[]>([resourceName]);
+			return data?.filter((d) => d[propName] in values);
+		},
+		enabled: dependency? true: false
 	});
 }
 
@@ -157,6 +182,8 @@ export {
 	useAllResource,
 	useResourceById,
 	useResourceByProp,
+	useManyResourceByName,
+	useManyResourceByProp,
 	useCreateResource,
     useCreateResourceWithChild,
 	//   useCreateDependantResource,

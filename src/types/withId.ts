@@ -1,1 +1,1 @@
-export type WithId = { id: string };
+export type WithId = { id: number };

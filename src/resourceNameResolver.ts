@@ -1,20 +1,22 @@
 import { kBill } from "./types/bill";
 import { currencyKeys } from "./types/currency";
-import { productKeys } from "./types/product";
+import { MasterOrderFields } from "./types/masterOrder";
+import { MasterOrderLineFields } from "./types/masterOrderLine";
+import { productKeys, ProductProdFileds } from "./types/product";
 import { purchaseOrderKeys, purchaseOrderLineKeys } from "./types/purchaseOrder";
 
 const resourceNameResolver= {
 	masterOrder: {
 		modelName: "at.master.order",
 		fields: {
-			fields: ["id", "name", "project_name", "workflow_type", "client_id", "vendor_id", "date_order", "date_expected", "priority", "amount_total", "line_ids", "commission_rate"],
+			fields: MasterOrderFields, 
 			// limit: 10,
 		},
 	},
 	masterOrderLine: {
 		modelName: "at.master.order.line",
 		fields: {
-			fields: ["id", "name", "master_id", "vendor_id", "quantity", "price_unit", "currency_id", "price_subtotal"],
+			fields: MasterOrderLineFields,
 		},
 	},
 	purchaseOrder: {
@@ -60,6 +62,14 @@ const resourceNameResolver= {
 		modelName: "product.template",
 		fields: {
 			fields: productKeys,
+			limit: 10,
+            offset: 0,
+		},
+	},
+	productProd: {
+		modelName: "product.product",
+		fields: {
+			fields: ProductProdFileds,
 			limit: 10,
             offset: 0,
 		},
