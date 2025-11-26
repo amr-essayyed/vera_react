@@ -15,6 +15,7 @@ export default function useCustomColumns(initial?: Column[]) {
     { id: "name", header: "Description", field: "name", type: "text", removable: false },
     { id: "quantity", header: "Qty", field: "quantity", type: "text", removable: false },
     { id: "price_cost", header: "Unit Price", field: "price_cost", type: "text", removable: false },
+    { id: "vendor_id", header: "Vendor", field: "vendor_id", type: "text", removable: false },
     { id: "subtotal", header: "Subtotal", type: "calculated", removable: false },
     { id: "actions", header: "Actions", type: "actions", removable: false },
   ];

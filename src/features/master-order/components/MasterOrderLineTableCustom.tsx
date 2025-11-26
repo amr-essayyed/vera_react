@@ -133,7 +133,7 @@ const MasterOrderLineTableCustom: React.FC<MasterOrderLineTableCustomProps> = ({
                         ) : (
                             <div className="w-full h-full border-2 border-dashed rounded-md bg-gray-50 flex flex-col items-center justify-center text-gray-500">
                                 <Image size={20} />
-                                <span className="text-xs text-center mt-1">Click or<br/>Paste</span>
+                                <span className="text-xs text-center mt-1">Paste or<br/>.</span>
                             </div>
                         )}
                         {/* Button only, not overlay */}

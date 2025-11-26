@@ -30,6 +30,7 @@ export default function MasterOrderForm({ masterOrder, lines}:Props) {
     const [errors, setErrors] = useState<any>(null);
     const {mutateAsync: createMasterOrder} = useCreateResourceWithChild("masterOrder", "line_ids");
     const { data: contacts, isLoading: isContactsLoading } = useAllResource("contact");
+    const {data: currencies, isLoading: isCurrencyLoading} = useAllResource("currency");
 
     const { createProducts } = useProducts();
 
@@ -69,7 +70,7 @@ export default function MasterOrderForm({ masterOrder, lines}:Props) {
             shipping_cost: formEntries.shipping_cost,
             shipping_charge: formEntries.shipping_charge,
             shipper_id: formEntries.shipper_id,
-            currency_id: formEntries.currency_id,
+            currency_id: formEntries.currency_id || 1,
             commission_rate: formEntries.commission_rate,
             auto_sync_documents: formEntries.auto_sync_documents,
             line_ids: orderLines.map((line) => ({
@@ -172,7 +173,15 @@ export default function MasterOrderForm({ masterOrder, lines}:Props) {
                         </Field>
                         <Field>
                             <FieldLabel>Currency</FieldLabel>
-                            <Input type="number" name="currency_id" defaultValue={masterOrder?.currency_id?.[0]} /> {/* need to make it select*/}
+                            {/* <Input type="number" name="currency_id" defaultValue={masterOrder?.currency_id?.[0]} /> need to make it select */}
+                            <Select name="currency_id" disabled={isCurrencyLoading} defaultValue={String(masterOrder?.currency_id?.[0])}>
+                                <SelectTrigger className={cn(`w-[180px]`, errors?.client_id && "border-red-500")}>
+                                    <SelectValue placeholder="Select a Currency" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {currencies && currencies.map((c:any)=> <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem> )}
+                                </SelectContent>
+                            </Select>
                             <FieldError>{errors?.currency_id}</FieldError>
                         </Field>
                         <Field>
