@@ -4,7 +4,7 @@ export type Column = {
   id: string;
   header: string;
   field?: string; // name used for input fields
-  type?: "text" | "file" | "calculated" | "actions";
+  type?: "text" | "file" | "calculated" | "actions" | "number";
   removable?: boolean;
 };
 
@@ -13,10 +13,11 @@ export default function useCustomColumns(initial?: Column[]) {
     { id: "image", header: "Image", field: "image", type: "file", removable: false },
     { id: "product_name", header: "Product Name", field: "product_name", type: "text", removable: false },
     { id: "name", header: "Description", field: "name", type: "text", removable: false },
-    { id: "quantity", header: "Qty", field: "quantity", type: "text", removable: false },
-    { id: "price_cost", header: "Unit Price", field: "price_cost", type: "text", removable: false },
+    { id: "quantity", header: "Qty", field: "quantity", type: "number", removable: false },
+    { id: "price_cost", header: "Purchase Price", field: "price_cost", type: "number", removable: false },
+    { id: "price_sale", header: "Sale Price", field: "price_sale", type: "number", removable: false },
     { id: "vendor_id", header: "Vendor", field: "vendor_id", type: "text", removable: false },
-    { id: "subtotal", header: "Subtotal", type: "calculated", removable: false },
+    { id: "price_subtotal_sale", header: "Subtotal", type: "calculated", removable: false },
     { id: "actions", header: "Actions", type: "actions", removable: false },
   ];
 

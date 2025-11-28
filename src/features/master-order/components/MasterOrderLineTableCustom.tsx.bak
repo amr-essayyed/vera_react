@@ -3,7 +3,7 @@ import { Image, Trash } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import AppSelectField from "@/components/AppSelectField";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import useCustomColumns from "../hooks/useCustomColumns";
 import type { tr_MasterOrderLine } from "@/types/masterOrderLine";  
 import type { tr_Product } from "@/types/product";
@@ -15,53 +15,19 @@ interface MasterOrderLineTableCustomProps {
     data?: tr_MasterOrderLine[];
     vendors: any;
     products: tr_Product;
-    setPurchaseCost: (val:any)=> void;
 }
 
-const   MasterOrderLineTableCustom: React.FC<MasterOrderLineTableCustomProps> = ({ name, data, vendors, products, setPurchaseCost }) => {
+const   MasterOrderLineTableCustom: React.FC<MasterOrderLineTableCustomProps> = ({ name, data, vendors, products }) => {
     const { columns, addCustomColumn, removeCustomColumn, getFieldByIndex, setColumns } = useCustomColumns();
-    const [rowCount, setRowCount] = useState<number[]>([0]);
+    const [rows, setRows] = useState<number[]>([0]);
     const [selectedCell, setSelectedCell] = useState<Cell | null>(null);
     const [imagePreviewsFromFile, setImagePreviewsFromFile] = useState<{ [key: string]: string }>({});
     // Array of refs for file inputs, one per row
     const fileInputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
-    const [quantity, setQuantity] = useState<string[]>([""]);
-    const [priceCost, setPriceCost] = useState<string[]>([""]);
-    const [priceSale, setPriceSale] = useState<string[]>([""]);
-    const [vendorId, setVendorId] = useState<string[]>([""]);
-
-    // Memoize subtotal calculation so it's not recomputed unnecessarily
-    const priceSubtotalSale: number[] = useMemo(() => {
-        const arr: number[] = [];
-        const len = Math.max(quantity.length, priceSale.length);
-        for (let i = 0; i < len; i++) {
-            arr[i] = Number(priceSale[i] ?? 0) * Number(quantity[i] ?? 0);
-        }
-        return arr;
-    }, [priceSale, quantity]);
-
-    const purchaseCost = useMemo(()=>{
-        return priceSubtotalSale.reduce((sum, sub)=> sum+sub, 0);
-    }, [priceSubtotalSale])
-    setPurchaseCost(purchaseCost);
-
-    const addRow = () => {
-        setRowCount(prev => [...prev, prev.length]);
-        // Extend state arrays to match new row count
-        setQuantity(prev => [...prev, ""]);
-        setPriceCost(prev => [...prev, ""]);
-        setPriceSale(prev => [...prev, ""]);
-        setVendorId(prev => [...prev, ""]);
-    };
-    
+    const addRow = () => setRows(prev => [...prev, prev.length]);
     const deleteRow = (index: number) => {
-        setRowCount(prev => prev.filter((_, i) => i !== index));
-        // Remove from state arrays
-        setQuantity(prev => prev.filter((_, i) => i !== index));
-        setPriceCost(prev => prev.filter((_, i) => i !== index));
-        setPriceSale(prev => prev.filter((_, i) => i !== index));
-        setVendorId(prev => prev.filter((_, i) => i !== index));
+        setRows(prev => prev.filter((_, i) => i !== index));
         // Remove image preview for this row
         setImagePreviewsFromFile(prev => {
             const updated = { ...prev };
@@ -94,36 +60,17 @@ const   MasterOrderLineTableCustom: React.FC<MasterOrderLineTableCustomProps> = 
         e.preventDefault();
 
         const text = e.clipboardData.getData("text");
-        // Split rows, then columns, and sanitize each value
-        // For number fields, remove all non-numeric characters except . and -
-        const sanitizeValue = (value: string, field: string | undefined) => {
-            let v = value.replace(/[\r\n]/g, '').trim();
-            // If the field is price_cost, price_sale, or quantity, strip non-numeric except . and -
-            if (["price_cost", "price_sale", "quantity"].includes(field || "")) {
-                v = v.replace(/[^0-9.-]/g, '');
-            }
-            return v;
-        };
         const parsed = text.trim().split("\n").map(r => r.split("\t"));
 
         const startRow = selectedCell.row;
         const startCol = selectedCell.col;
 
-        const neededRows = startRow + parsed.length - rowCount.length;
+        const neededRows = startRow + parsed.length - rows.length;
         if (neededRows > 0) {
-            setRowCount(prev => [...prev, ...Array.from({ length: neededRows }, (_, i) => prev.length + i)]);
-            // Also extend state arrays
-            setQuantity(prev => [...prev, ...Array.from({ length: neededRows }, () => "")]);
-            setPriceCost(prev => [...prev, ...Array.from({ length: neededRows }, () => "")]);
-            setPriceSale(prev => [...prev, ...Array.from({ length: neededRows }, () => "")]);
-            setVendorId(prev => [...prev, ...Array.from({ length: neededRows }, () => "")]);
+            setRows(prev => [...prev, ...Array.from({ length: neededRows }, (_, i) => prev.length + i)]);
         }
 
         setTimeout(() => {
-            const tempQuantity = [...quantity];
-            const tempPriceCost = [...priceCost];
-            const tempPriceSale= [...priceSale];
-            const tempVedorId= [...vendorId];
             parsed.forEach((rowData, rIdx) => {
                 const targetRow = startRow + rIdx;
 
@@ -132,32 +79,12 @@ const   MasterOrderLineTableCustom: React.FC<MasterOrderLineTableCustomProps> = 
                     const field = getFieldByIndex(col);
                     if (!field) return;
 
-                    // Sanitize value for number fields
-                    const cleanValue = sanitizeValue(value, field);
-
                     const input = document.querySelector(
                         `input[name="${name}[${targetRow}][${field}]"]`
                     ) as HTMLInputElement;
-                    
-                    if(field === "quantity") {
-                        tempQuantity[targetRow] = cleanValue;
-                        setQuantity(tempQuantity);
-                    }else
-                    if(field === "price_cost") {
-                        tempPriceCost[targetRow] = cleanValue;
-                        setPriceCost(tempPriceCost);
-                    }else
-                    if(field === "price_sale") {
-                        tempPriceSale[targetRow] = cleanValue;
-                        setPriceSale(tempPriceSale);
-                    }else
-                    if(field === "vendor_id") {
-                        tempPriceSale[targetRow] = cleanValue;
-                        setVendorId(tempVedorId);
-                    }else
 
                     if (input) {
-                        input.value = cleanValue;
+                        input.value = value;
                         input.dispatchEvent(new Event("input", { bubbles: true }));
                     }
                 });
@@ -225,54 +152,11 @@ const   MasterOrderLineTableCustom: React.FC<MasterOrderLineTableCustomProps> = 
                         name={`${name}[${rowIndex}][vendor_id]`}
                         label="Vendor"
                         values={vendorOptions}
-                        value={vendorId[rowIndex]}
-                        onValueChange={(value)=> setPriceCost(prev => { const n = [...prev]; n[rowIndex] = value; return n; })}
-                        // defaultValue={defaultVal}
+                        defaultValue={defaultVal}
                     />
                 </TableCell>
             );
         }
-
-        if(col.field === "price_cost") {
-            // const field = col.field ?? `col_${colIndex}`;
-            const defaultVal = (data?.[rowIndex] as any)?.["price_cost"];
-            return (
-                <TableCell className="border" key={`${rowIndex}-${col.id}`} onClick={onClick}>
-                    <Input type="number" name={`${name}[${rowIndex}][price_cost]`} placeholder={col.header} defaultValue={defaultVal} value={priceCost[rowIndex]} onChange={(e)=> setPriceCost(prev => { const n = [...prev]; n[rowIndex] = e.target.value; return n; })} />
-                </TableCell>
-            )
-        }
-        
-        if(col.field === "price_sale") {
-            const defaultVal = (data?.[rowIndex] as any)?.["price_sale"];
-            return (
-                <TableCell className="border" key={`${rowIndex}-${col.id}`} onClick={onClick}>
-                    <Input type="number" name={`${name}[${rowIndex}][price_sale]`} placeholder={col.header} defaultValue={defaultVal} value={priceSale[rowIndex]} onChange={(e)=> setPriceSale(prev => { const n = [...prev]; n[rowIndex] = e.target.value; return n; })} />
-                </TableCell>
-            )
-        }
-
-        if (col.field === "quantity") {
-            const defaultVal = (data?.[rowIndex] as any)?.["quantity"];
-            return (
-                <TableCell className="border" key={`${rowIndex}-${col.id}`} onClick={onClick}>
-                    <div className="flex gap-1">
-                        <Input type="number" name={`${name}[${rowIndex}][quantity]`} placeholder="0" defaultValue={defaultVal} value={quantity[rowIndex]} onChange={(e)=> setQuantity(prev => { const n = [...prev]; n[rowIndex] = e.target.value; return n; })} />
-                        <span className="text-gray-500">pcs</span>
-                    </div>
-                </TableCell>
-            );
-        }
-        
-        if (col.id === "price_subtotal_sale") {
-
-            return (
-                <TableCell className="border" key={`${rowIndex}-${col.id}`}>
-                    <Input disabled placeholder="0.00" type="number" value={priceSubtotalSale[rowIndex]} style={{color: priceSubtotalSale[rowIndex]==0? "black": priceSubtotalSale[rowIndex]>0? "green" : "red"}} />
-                </TableCell>
-            );
-        }
-
         if (col.type === "file") {
             const hasImage = (data && data?.[rowIndex]?.image_1920) || imagePreviewsFromFile[`${rowIndex}`];
             // Ensure the ref array is long enough
@@ -331,7 +215,7 @@ const   MasterOrderLineTableCustom: React.FC<MasterOrderLineTableCustomProps> = 
                             <span className="text-xs">Upload</span>
                         </button>
                         <Input
-                            ref={el => { fileInputRefs.current[rowIndex] = el }}
+                            ref={el => (fileInputRefs.current[rowIndex] = el)}
                             name={`${name}[${rowIndex}][${col.field ?? "image"}]`}
                             type="file"
                             accept="image/*"
@@ -346,17 +230,17 @@ const   MasterOrderLineTableCustom: React.FC<MasterOrderLineTableCustomProps> = 
 
         if (col.type === "text") {
             const field = col.field ?? `col_${colIndex}`;
-            const defaultVal = field === "product_name" ? data?.[rowIndex]?.product_id?.[1] : (data?.[rowIndex] as any)?.[field];
-            // if (field === "quantity") {
-            //     return (
-            //         <TableCell className="border" key={`${rowIndex}-${col.id}`} onClick={onClick}>
-            //             <div className="flex gap-1">
-            //                 <Input type="number" name={`${name}[${rowIndex}][${field}]`} placeholder="0" defaultValue={defaultVal} value={quantity} onChange={(e)=> setQuantity(e.target.value)} />
-            //                 <span className="text-gray-500">pcs</span>
-            //             </div>
-            //         </TableCell>
-            //     );
-            // }
+            const defaultVal = field === "product_name" ? data?.[rowIndex]?.product_id?.[1] : data?.[rowIndex]?.[field];
+            if (field === "quantity") {
+                return (
+                    <TableCell className="border" key={`${rowIndex}-${col.id}`} onClick={onClick}>
+                        <div className="flex gap-1">
+                            <Input name={`${name}[${rowIndex}][${field}]`} placeholder="0" defaultValue={defaultVal} />
+                            <span className="text-gray-500">pcs</span>
+                        </div>
+                    </TableCell>
+                );
+            }
 
             return (
                 <TableCell className="border" key={`${rowIndex}-${col.id}`} onClick={onClick}>
@@ -368,18 +252,10 @@ const   MasterOrderLineTableCustom: React.FC<MasterOrderLineTableCustomProps> = 
         if (col.type === "calculated") {
             return (
                 <TableCell className="border" key={`${rowIndex}-${col.id}`}>
-                    <Input disabled placeholder="0.00" type="number" />
+                    <Input disabled placeholder="$0.00" />
                 </TableCell>
             );
         }
-        
-        // if (col.type === "number") {
-        //     return (
-        //         <TableCell className="border" key={`${rowIndex}-${col.id}`}>
-        //             <Input placeholder="0.00" type="number" />
-        //         </TableCell>
-        //     );
-        // }
 
         if (col.type === "actions") {
             return (
@@ -400,13 +276,8 @@ const   MasterOrderLineTableCustom: React.FC<MasterOrderLineTableCustomProps> = 
 
     useEffect(()=>{
         if (data) {
-            setRowCount(Array.from({ length: data.length }, (_, i) => i));
-
-            // Initialize input arrays from incoming data to avoid extra re-renders later
-            setQuantity(Array.from({ length: data.length }, (_, i) => String((data[i] as any)?.quantity ?? "")));
-            setPriceCost(Array.from({ length: data.length }, (_, i) => String((data[i] as any)?.price_cost ?? "")));
-            setPriceSale(Array.from({ length: data.length }, (_, i) => String((data[i] as any)?.price_sale ?? "")));
-
+            setRows(Array.from({ length: data.length }, (_, i) => i));
+            
             const imagePreviews: { [key: string]: string } = {};
             data.forEach((line, index) => {
                 if (line.image_1920) {
@@ -438,7 +309,7 @@ const   MasterOrderLineTableCustom: React.FC<MasterOrderLineTableCustomProps> = 
             <Table className="border" onPaste={handlePaste}>
                 <TableHeader>
                     <TableRow className="bg-gray-100">
-                        {columns.map((col) => (
+                        {columns.map((col, idx) => (
                             <TableHead className="border" key={col.id}>
                                 <div className="flex items-center justify-between gap-2">
                                     {col.removable ? (
@@ -463,7 +334,7 @@ const   MasterOrderLineTableCustom: React.FC<MasterOrderLineTableCustomProps> = 
                 </TableHeader>
 
                 <TableBody>
-                    {rowCount.map((_, i) => (
+                    {rows.map((_, i) => (
                         <TableRow key={i}>
                             {columns.map((col, cIdx) => renderCell(col, cIdx, i))}
                         </TableRow>

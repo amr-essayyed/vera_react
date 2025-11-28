@@ -13,6 +13,8 @@ interface tProps {
     options?: any[];
     createNew?: ReactElement;
     defaultValue?: any;
+    value: any;
+    onValueChange: any;
     error?: string;
     isLoading?: boolean;
 }
@@ -24,6 +26,8 @@ export default function AppSelectField({
     options,
     createNew,
     defaultValue,
+    value,
+    onValueChange,
     error,
     isLoading
 }: tProps) {
@@ -37,6 +41,8 @@ export default function AppSelectField({
                     // onValueChange={ resourceState? (val) => field.onChange(JSON.parse(val)) : field.onChange}
                     // value={field.value ? (resourceState? JSON.stringify(field.value):field.value) : ""} 
                     disabled={isLoading}
+                    value={value}
+                    onValueChange={onValueChange}
                 >
                     <SelectTrigger className="w-full">
                         <SelectValue placeholder={isLoading ? `Loading ${startCase(label)}...` : `Select ${startCase(label)}`} />

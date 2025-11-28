@@ -9,6 +9,10 @@ import { BreadcrumbProvider } from './contexts/BreadcrumbContext';
 import { Toaster } from './components/ui/sonner';
 // import Counter from './components/Counter'
 
+import 'handsontable/styles/handsontable.min.css';
+import 'handsontable/styles/ht-theme-main.min.css';
+
+
 function App() {
     
     const defaultOpen  = CookieStorage.getItem("sidebar_state") === "true"; // read directly    
