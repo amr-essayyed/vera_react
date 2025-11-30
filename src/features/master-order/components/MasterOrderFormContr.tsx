@@ -17,7 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import MasterOrderLineTable from "./MasterOrderLineTable";
 import { useProducts } from "@/hooks/useOrderLines";
 import { assignNestedValue } from "@/lib/formParsing";
-import type { tr_MasterOrderLine } from "@/types/masterOrderLine";
+import { tf_MasterOrderLine, type tr_MasterOrderLine } from "@/types/masterOrderLine";
 import MasterOrderLineTableCustom from "./MasterOrderLineTableCustom";
 import ExcelLikeTable from "@/components/ExcelLikeTabel";
 import ExcelJspeadsheet from "@/components/ExcelJspeadsheet";
@@ -25,31 +25,35 @@ import { data, useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import MasterOrderLineTableContr from "./MasterOrderLineTableContr";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState } from "@/state/store";
 class Props {
     "masterOrder"?: tr_MasterOrder;
     "lines"?: tr_MasterOrderLine[];
 }
+import { setFieldValue } from "@/state/masterOrder/masterOrderSlice";
 
-export default function MasterOrderForm({ masterOrder, lines}:Props) {
+export default function MasterOrderFormC({ masterOrder, lines}:Props) {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    // States
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<any>(null);
     const {mutateAsync: createMasterOrder} = useCreateResourceWithChild("masterOrder", "line_ids");
     const { data: contacts, isLoading: isContactsLoading } = useAllResource("contact");
     const {data: currencies, isLoading: isCurrencyLoading} = useAllResource("currency");
-    const {data: products, isLoading: isProductsLoading} = useAllResource("product");
+    // const {data: products, isLoading: isProductsLoading} = useAllResource("product");
+    const masterOrderForm = useSelector((state: RootState) => state.masterOrder.value)
+    const masterOrderLines = useSelector((state: RootState) => state.masterOrderLines.value);
+
 
     // Computes
-    const [clientId, setClientId] = useState(String(masterOrder?.client_id?.[0]));
-    const [shippingCost, setShippingCost] = useState(String(masterOrder?.shipping_cost));
-    const [shippingCharge, setShippingCharge] =        useState(String(masterOrder?.shipping_charge))
-    const shippingMargin = Number(shippingCharge) - Number(shippingCost);
+    const shippingMargin = Number(masterOrderForm.shipping_charge) - Number(masterOrderForm.shipping_cost);
 
-    const [purchaseCost, setPurchaseCost] =                useState(masterOrder?.amount_cost);
-    const [commissionRate, setCommissionRate] =    useState(String(masterOrder?.commission_rate));
-
-    const amountCost = Number(purchaseCost) + Number(shippingCost);
-    const amountCommission = Number(purchaseCost) + (Number(purchaseCost) * (1+Number(commissionRate)));
+    const purchaseCost = masterOrderLines.slice(1).reduce((sum,row)=>Number(sum)+(Number(row[3]||0)*Number(row[4]||0)), 0)
+    const amountCost = Number(purchaseCost) + Number(masterOrderForm.shipping_cost);
+    // const amountCommission = Number(purchaseCost) + (Number(purchaseCost) * (1+(Number(masterOrderForm.commission_rate)/100)));
+    const amountCommission =  (Number(purchaseCost) * ((Number(masterOrderForm.commission_rate)/100)));
     
     const totalExpenses = masterOrder?.total_expenses || 0;
     const amountSale = amountCost + amountCommission;
@@ -58,16 +62,8 @@ export default function MasterOrderForm({ masterOrder, lines}:Props) {
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-
-        //* get data of the form
         setIsSubmitting(true);
-        const formData = new FormData(e.target as HTMLFormElement);
-        const formEntries: any = {};
-        for (const [key, value] of formData.entries()) {
-            assignNestedValue(formEntries, key, value);
-        }
-        console.log("[handleSubmit]formEntries: ", formEntries);
-        
+
         //* validate
         const validationErrors = [] as any//validateMasterOrder(formEntries); // const validationErrors = validateBill(formEntries);
         
@@ -80,21 +76,32 @@ export default function MasterOrderForm({ masterOrder, lines}:Props) {
         }
 
         // //* prepare
-        const orderLines = await createProducts(formEntries.line_ids);
+        const masterOrderLineForm: tf_MasterOrderLine[] = masterOrderLines.slice(1).map((mol)=>({
+            image: mol[0],
+            product_name: mol[1],
+            name: mol[2],
+            quantity: Number(mol[3]),
+            price_cost: Number(mol[4]),
+            price_sale: 0,
+            vendor_id: 2,
+        }))
+        const orderLines = await createProducts(masterOrderLineForm);
         console.log("order Lines", orderLines);
         
+        console.log("masterOrder form", masterOrderForm);
+        
         const newMasterOrder: tc_MasterOrder = {
-            project_name: formEntries.project_name as string,
-            client_id: formEntries.client_id as number,
-            date_order: odooDatetimeFormat(formEntries.date_order),
-            date_expected: formEntries.date_expected,
-            virtual_inventory: formEntries.virtual_inventory, //todo:  make it true and false
-            shipping_cost: formEntries.shipping_cost,
-            shipping_charge: formEntries.shipping_charge,
-            shipper_id: formEntries.shipper_id,
-            currency_id: formEntries.currency_id || 1,
-            commission_rate: formEntries.commission_rate,
-            auto_sync_documents: formEntries.auto_sync_documents,
+            project_name: masterOrderForm.project_name as string,
+            client_id: Number(masterOrderForm.client_id),
+            date_order: odooDatetimeFormat(masterOrderForm.date_order),
+            date_expected: masterOrderForm.date_expected,
+            virtual_inventory: masterOrderForm.virtual_inventory, //todo:  make it true and false
+            shipping_cost: masterOrderForm.shipping_cost,
+            shipping_charge: masterOrderForm.shipping_charge,
+            shipper_id: masterOrderForm.shipper_id,
+            currency_id: masterOrderForm.currency_id || 1,
+            commission_rate: masterOrderForm.commission_rate,
+            auto_sync_documents: masterOrderForm.auto_sync_documents,
             line_ids: orderLines.map((line) => ({
                 "name": line.name,
                 "image_1920": line.image,
@@ -112,7 +119,7 @@ export default function MasterOrderForm({ masterOrder, lines}:Props) {
             .then((res) => {
                 console.log("[submit success]", res);
                 toast.success("Master Order created successfully");
-                navigate(`/purchase-orders/${res[0]}`);
+                navigate(`/master-orders/${res[0]}`);
             }).catch((err) => {
                 console.log("[submit fail]",err);
                 toast.error("Failed to create Master Order");
@@ -147,12 +154,12 @@ export default function MasterOrderForm({ masterOrder, lines}:Props) {
                             <CardContent className="flex flex-row gap-3 bg-[#fcfcfc]">
                                 <Field>
                                     <FieldLabel>Project Name</FieldLabel>
-                                    <Input type="text" name="project_name" defaultValue={masterOrder?.project_name}/>
+                                    <Input type="text" name="project_name" defaultValue={masterOrder?.project_name} value={masterOrderForm.project_name} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))} />
                                     <FieldError>{errors?.project_name}</FieldError>
                                 </Field>
                                 <Field>
                                     <FieldLabel>Client</FieldLabel>
-                                    <Select name="client_id" disabled={isContactsLoading} value={String(clientId)} onValueChange={(value)=>setClientId((value))}>
+                                    <Select name="client_id" disabled={isContactsLoading} value={String(masterOrderForm.client_id)} onValueChange={(v)=>dispatch(setFieldValue({field: "client_id", value: v}))}>
                                         <SelectTrigger className={cn(`w-[180px]`, errors?.client_id && "border-red-500")}>
                                             <SelectValue placeholder="Select a Client" />
                                         </SelectTrigger>
@@ -175,12 +182,12 @@ export default function MasterOrderForm({ masterOrder, lines}:Props) {
                             <CardContent className="flex flex-row gap-3 bg-[#fcfcfc]">
                                 <Field>
                                     <FieldLabel>Order Date</FieldLabel>
-                                    <Input type="datetime-local" name="date_order" defaultValue={masterOrder?.date_order} />
+                                    <Input type="datetime-local" name="date_order" value={masterOrderForm.date_order} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))}/>
                                     <FieldError>{errors?.date_order}</FieldError>
                                 </Field>
                                 <Field>
                                     <FieldLabel>Expected Delivery</FieldLabel>
-                                    <Input type="date" name="date_expected" defaultValue={masterOrder?.date_expected} />
+                                    <Input type="date" name="date_expected" value={masterOrderForm.date_expected} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))}/>
                                     <FieldError>{errors?.date_expected}</FieldError>
                                 </Field>
                             </CardContent>
@@ -195,12 +202,12 @@ export default function MasterOrderForm({ masterOrder, lines}:Props) {
                             <CardContent className="flex flex-row gap-3 bg-[#fcfcfc]">
                                 <Field orientation="horizontal" className="flex-col"> 
                                     <FieldLabel>Virtual Inventory (Dropship/D2D)</FieldLabel>
-                                    <Checkbox name="virtual_inventory" defaultChecked={masterOrder?.virtual_inventory} />
+                                    <Checkbox name="virtual_inventory" checked={masterOrderForm.virtual_inventory} onCheckedChange={(value)=>dispatch(setFieldValue({field: 'virtual_inventory', value}))}/>
                                     <FieldError>{errors?.virtual_inventory}</FieldError>
                                 </Field>
                                 <Field orientation="horizontal" className="flex-col "> 
                                     <FieldLabel className="text-left">Shipper</FieldLabel>
-                                    <Select name="shipper_id" disabled={isContactsLoading} defaultValue={String(masterOrder?.shipper_id)}>
+                                    <Select name="shipper_id" disabled={isContactsLoading} value={String(masterOrderForm.shipper_id)} onValueChange={(value)=>dispatch(setFieldValue({field: 'shipper_id', value}))}>
                                         <SelectTrigger className={cn(`w-[180px]`, errors?.shipper_id && "border-red-500")}>
                                             <SelectValue placeholder="Select a Shipper" />
                                         </SelectTrigger>
@@ -212,12 +219,12 @@ export default function MasterOrderForm({ masterOrder, lines}:Props) {
                                 </Field>
                                 <Field className="flex-col">
                                     <FieldLabel>Shipping Cost</FieldLabel>
-                                    <Input type="number" name="shipping_cost"  value={shippingCost} onChange={(e)=> setShippingCost(e.target.value)}/>
+                                    <Input type="number" name="shipping_cost"  value={masterOrderForm.shipping_cost} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))}/>
                                     <FieldError>{errors?.shipping_cost}</FieldError>
                                 </Field>
                                 <Field className="flex-col">
                                     <FieldLabel>Shipping Charge</FieldLabel>
-                                    <Input type="number" name="shipping_charge" value={shippingCharge} onChange={(e)=> setShippingCharge(e.target.value)} />
+                                    <Input type="number" name="shipping_charge" value={masterOrderForm.shipping_charge} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))} />
                                     <FieldError>{errors?.shipping_charge}</FieldError>
                                 </Field>
                                 <Field className="flex-col align-top">
@@ -237,7 +244,7 @@ export default function MasterOrderForm({ masterOrder, lines}:Props) {
                                 <Field>
                                     <FieldLabel>Currency</FieldLabel>
                                     {/* <Input type="number" name="currency_id" defaultValue={masterOrder?.currency_id?.[0]} /> need to make it select */}
-                                    <Select name="currency_id" disabled={isCurrencyLoading} defaultValue={String(masterOrder?.currency_id?.[0])}>
+                                    <Select name="currency_id" disabled={isCurrencyLoading} defaultValue={String(masterOrder?.currency_id?.[0])} value={String(masterOrderForm.currency_id)} onValueChange={(value)=>dispatch(setFieldValue({field: 'currency_id', value}))}>
                                         <SelectTrigger className={cn(`w-[180px]`, errors?.client_id && "border-red-500")}>
                                             <SelectValue placeholder="Select a Currency" />
                                         </SelectTrigger>
@@ -249,7 +256,7 @@ export default function MasterOrderForm({ masterOrder, lines}:Props) {
                                 </Field>
                                 <Field>
                                     <FieldLabel>Commission Rate (%)</FieldLabel>
-                                    <Input type="number" min={0} max={100} name="commission_rate" value={commissionRate} onChange={(e)=>setCommissionRate(e.target.value)} />
+                                    <Input type="number" min={0} max={100} name="commission_rate" value={masterOrderForm.commission_rate} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))} />
                                     <FieldError>{errors?.commission_rate}</FieldError>
                                 </Field>
                                 <Field>
@@ -287,7 +294,7 @@ export default function MasterOrderForm({ masterOrder, lines}:Props) {
                                         <tr><td className="pr-4"><span className="font-bold">Untaxed Amount: </span></td><td>$ {amountCost || masterOrder?.amount_cost}</td></tr>
                                         <tr><td className="pr-4"><span className="font-bold">Comission: </span></td><td>$ {amountCommission || masterOrder?.amount_commission}</td></tr>
                                         <tr><td className="pr-4"><span className="font-bold">Expenses: </span></td><td>$ {totalExpenses || masterOrder?.total_expenses}</td></tr>
-                                        <tr><td className="pr-4"><span className="font-bold">Shipping: </span></td><td>$ {shippingCharge || masterOrder?.shipping_charge}</td></tr>
+                                        <tr><td className="pr-4"><span className="font-bold">Shipping: </span></td><td>$ {masterOrderForm.shipping_charge || masterOrder?.shipping_charge}</td></tr>
                                     </tbody>
                                     <tbody>
                                         <tr><td className="pr-4 pt-4"><span className="font-bold">Total: </span></td><td className="text-2xl font-bold">$ {amountSale || 0}</td></tr>

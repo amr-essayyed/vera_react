@@ -1,7 +1,7 @@
 export class tfpart_OrderLine {
     "name": string;
     "product_name": string;
-    "image"?: File;
+    "image"?: File | string;
     "quantity": number;
     "price_cost": number;
     "price_sale"?: number;

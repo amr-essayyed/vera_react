@@ -21,7 +21,10 @@ export function useProducts() {
 		// Prepare data for creation
 		const productsToCreate = await Promise.all(
 			newProducts.map(async (line) => {
-				const imageBase64 = line.image? await imageToBase64(line.image): undefined;
+				var imageBase64;
+				if(line.image instanceof File){
+					imageBase64 = line.image? await imageToBase64(line.image): undefined;
+				}
 
 				const product: tc_Product = {
 					name: line.product_name,

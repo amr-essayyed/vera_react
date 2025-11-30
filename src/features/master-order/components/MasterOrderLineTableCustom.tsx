@@ -152,7 +152,7 @@ const   MasterOrderLineTableCustom: React.FC<MasterOrderLineTableCustomProps> = 
                         setPriceSale(tempPriceSale);
                     }else
                     if(field === "vendor_id") {
-                        tempPriceSale[targetRow] = cleanValue;
+                        tempVedorId[targetRow] = cleanValue;
                         setVendorId(tempVedorId);
                     }else
 

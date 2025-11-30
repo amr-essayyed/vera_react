@@ -3,6 +3,7 @@ import MasterOrderForm from "../components/MasterOrderForm";
 import { useParams } from "react-router-dom";
 import LoadingSubPage from "@/components/LoadingSubPage";
 import type { tr_MasterOrder } from "@/types/masterOrder";
+import MasterOrderFormC from "../components/MasterOrderFormContr";
 // import type { tc_MasterOrderLine } from "@/types/masterOrderLine";
 // import type { tr_productProd } from "@/types/product";
 
@@ -18,7 +19,7 @@ export default function MasterOrderEditPage() {
 
     return (
         <div className="p-6">
-            <MasterOrderForm masterOrder={masterOrder} lines={lines} />
+            <MasterOrderFormC masterOrder={masterOrder} lines={lines} />
         </div>
     )
 }

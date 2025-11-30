@@ -1,9 +1,13 @@
 import {configureStore} from "@reduxjs/toolkit";
-import counterReducer from "./counter/counterSlice"
+import counterReducer from "./counter/counterSlice";
+import masterOrderLinesReducer from "@/state/masterOrder/masterOrderLinesSlice";
+import masterOrderReducer from "@/state/masterOrder/masterOrderSlice";
 
 const store = configureStore({
     reducer:{
         counter: counterReducer,
+        masterOrder: masterOrderReducer,
+        masterOrderLines: masterOrderLinesReducer,
     },
 
 });

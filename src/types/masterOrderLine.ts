@@ -1,5 +1,5 @@
 export class tf_MasterOrderLine {
-    "image"?: File;
+    "image"?: File | string;
     "product_name": string;
     "name": string;  // todo: replace "name" with "description" after Odoo model modification.
     "vendor_id"?: number;
@@ -7,6 +7,7 @@ export class tf_MasterOrderLine {
     "price_cost": number;
     "price_sale"?: number;  
 }
+export const MasterOrderLineFormFields = Object.keys(new tf_MasterOrderLine());
 
 export class tc_MasterOrderLine {
     "image_1920"?: string;// File;
