@@ -44,7 +44,7 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
     // Computes
     const shippingMargin = Number(masterOrderForm.shipping_charge) - Number(masterOrderForm.shipping_cost);
 
-    const purchaseCost = masterOrderLines.slice(1).reduce((sum,row)=>Number(sum)+(Number(row[3]||0)*Number(row[4]||0)), 0)
+    const purchaseCost = masterOrderLines.slice(1).reduce((sum,row)=>Number(sum)+(Number(row[3]||0)*Number(row[4]||0)), 0) || 0;
     const amountCost = Number(purchaseCost) + Number(masterOrderForm.shipping_cost);
     // const amountCommission = Number(purchaseCost) + (Number(purchaseCost) * (1+(Number(masterOrderForm.commission_rate)/100)));
     const amountCommission =  (Number(purchaseCost) * ((Number(masterOrderForm.commission_rate)/100)));
