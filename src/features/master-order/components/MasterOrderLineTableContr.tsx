@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { addColumn, addLine, completeTableTobe, removeColumn, removeLine, setCellValue } from '@/state/masterOrder/masterOrderLinesSlice';
 import type { RootState } from '@/state/store';
-import { Trash } from 'lucide-react';
+import { Trash, Upload } from 'lucide-react';
 import type React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -55,6 +55,9 @@ export default function MasterOrderLineTableContr() {
         e.preventDefault();
 
         const items = e.clipboardData.items;
+        if(items.length > table.length) {
+            dispatch(completeTableTobe(items.length))
+        }
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
 
@@ -99,7 +102,7 @@ export default function MasterOrderLineTableContr() {
 
     const textCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='text' value={table[r+1][c] || ''} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value }))} ></Input></TableCell>;
     const numberCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='number' value={table[r+1][c]|| ''} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value }))}></Input></TableCell>;
-    const imageCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border"><Input  type='file' accept='image/*' onPaste={(e)=>handlePasteImage(e,r,c)}></Input><img src={table[r+1][c]||undefined} /></TableCell>;
+    const imageCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border"><Upload className="w-6 h-6 text-gray-500 absolute cursor-pointer" /><Input  type='file' accept='image/*' onPaste={(e)=>handlePasteImage(e,r,c)} className='w-6 h-6 float-left absolute cursor-pointer opacity-0'></Input><img src={table[r+1][c]||undefined} className='max-w-20 max-h-20' /></TableCell>;
 
     const tableRow =(k: number) => ( 
         <TableRow key={k}>
