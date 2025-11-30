@@ -100,9 +100,19 @@ export default function MasterOrderLineTableContr() {
 
     }
 
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, r: number, c: number) => {
+        const files = e.target.files
+        if (files) {
+            const imageFile = files[0]
+            const reader = new FileReader();
+            reader.readAsDataURL(imageFile);
+            reader.onload = ()=> dispatch(setCellValue({row: r+1, col: c, value: reader.result }))
+        }
+    }
+
     const textCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='text' value={table[r+1][c] || ''} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value }))} ></Input></TableCell>;
     const numberCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='number' value={table[r+1][c]|| ''} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value }))}></Input></TableCell>;
-    const imageCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border"><Upload className="w-6 h-6 text-gray-500 absolute cursor-pointer" /><Input  type='file' accept='image/*' onPaste={(e)=>handlePasteImage(e,r,c)} className='w-6 h-6 float-left absolute cursor-pointer opacity-0'></Input><img src={table[r+1][c]||undefined} className='max-w-20 max-h-20' /></TableCell>;
+    const imageCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border"><Upload className="w-6 h-6 text-gray-500 absolute cursor-pointer" /><Input  type='file' accept='image/*' onPaste={(e)=>handlePasteImage(e,r,c)} className='w-6 h-6 float-left absolute cursor-pointer opacity-0' onChange={(e)=>handleImageChange(e,r,c)}></Input><img src={table[r+1][c]||undefined} className='max-w-20 max-h-20' /></TableCell>;
 
     const tableRow =(k: number) => ( 
         <TableRow key={k}>
