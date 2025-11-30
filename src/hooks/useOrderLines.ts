@@ -1,7 +1,6 @@
 import { imageToBase64 } from "@/utils/imageUtils";
 import { useCreateMultipleResources } from "./useResource";
 import type { tc_Product, tr_Product } from "@/types/product";
-import { omit } from "@/utils/miscUtils";
 // import { useQueryClient } from "@tanstack/react-query";
 import { ResourceService } from "@/services/resourceService";
 import type { tcpart_OrderLine, tfpart_OrderLine } from "@/types/orderLine";

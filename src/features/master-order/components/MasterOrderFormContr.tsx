@@ -2,7 +2,7 @@
 // todo: make a validation function for master order
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
 import { Calendar, DollarSign, FileText, Save, Truck } from "lucide-react";
-import { useRef, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useAllResource, useCreateResourceWithChild } from "@/hooks/useResource";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -14,15 +14,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { odooDatetimeFormat } from "@/lib/datetime";
 import { Checkbox } from "@/components/ui/checkbox";
-import MasterOrderLineTable from "./MasterOrderLineTable";
 import { useProducts } from "@/hooks/useOrderLines";
-import { assignNestedValue } from "@/lib/formParsing";
 import { tf_MasterOrderLine, type tr_MasterOrderLine } from "@/types/masterOrderLine";
-import MasterOrderLineTableCustom from "./MasterOrderLineTableCustom";
-import ExcelLikeTable from "@/components/ExcelLikeTabel";
-import ExcelJspeadsheet from "@/components/ExcelJspeadsheet";
-import { data, useNavigate } from "react-router-dom";
-import { Separator } from "@/components/ui/separator";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import MasterOrderLineTableContr from "./MasterOrderLineTableContr";
 import { useDispatch, useSelector } from "react-redux";

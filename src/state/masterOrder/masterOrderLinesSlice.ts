@@ -38,7 +38,7 @@ const masterOrderLinesSlice = createSlice({
         },
         removeColumn: (state, action) => {
             for(let i=0; i<state.value.length; i++){
-                state.value[i].splice(i,1);
+                state.value[i].splice(action.payload,1);
             }
         }
     }
