@@ -15,7 +15,8 @@ export default function MasterOrderLineTableContr() {
     const table = useSelector((state: RootState) => state.masterOrderLines.value);
     const numberOfRows = table.length - 1;
     const numberOfColumns = table[0].length;
-    const numberOfCustomColumns = (table[0].length)-6;
+    const numberOfBaseColumns =8;
+    const numberOfCustomColumns = (table[0].length)-numberOfBaseColumns;
     
     const handlePaste = (e: React.ClipboardEvent<HTMLTableCellElement>, r: number, c: number) => {
         e.preventDefault();
@@ -111,7 +112,7 @@ export default function MasterOrderLineTableContr() {
     }
 
     const textCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='text' value={table[r+1][c] || ''} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value }))} ></Input></TableCell>;
-    const numberCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='number' value={table[r+1][c]|| ''} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value }))}></Input></TableCell>;
+    const numberCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='number' value={String(parseFloat(table[r+1][c]))|| ''} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value }))}></Input></TableCell>;
     const imageCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border"><Upload className="w-6 h-6 text-gray-500 absolute cursor-pointer" /><Input  type='file' accept='image/*' onPaste={(e)=>handlePasteImage(e,r,c)} className='w-6 h-6 float-left absolute cursor-pointer opacity-0' onChange={(e)=>handleImageChange(e,r,c)}></Input><img src={table[r+1][c]||undefined} className='max-w-20 max-h-20' /></TableCell>;
 
     const tableRow =(k: number) => ( 
@@ -122,8 +123,10 @@ export default function MasterOrderLineTableContr() {
             {textCell(k,2)}
             {numberCell(k,3)}
             {numberCell(k,4)}
+            {numberCell(k,5)}
+            {numberCell(k,6)}
             <TableCell></TableCell>
-            {[...Array(numberOfCustomColumns)].map((_,i)=>(textCell(k,i+6)))}
+            {[...Array(numberOfCustomColumns)].map((_,i)=>(textCell(k,i+numberOfBaseColumns)))}
             <TableCell className="border"><Button type="button" variant="destructive" onClick={() => dispatch(removeLine(k+1))}><Trash /></Button></TableCell>
         </TableRow>
     )
@@ -147,12 +150,14 @@ export default function MasterOrderLineTableContr() {
                 <TableHead className="border">Description</TableHead>
                 <TableHead className="border">Qty</TableHead>
                 <TableHead className="border">Unit Price</TableHead>
+                <TableHead className="border">Sale Price</TableHead>
+                <TableHead className="border">Vendor</TableHead>
                 <TableHead className="border">Subtotal</TableHead>
-                {table?.[0].slice(6).map((columnName:string, i: number)=>(
+                {table?.[0].slice(numberOfBaseColumns).map((columnName:string, i: number)=>(
                 <TableHead key={`columnName${i}`} className="border">
                         <div className='flex justify-between items-center'>
-                            <Input value={columnName} onChange={(e)=>dispatch(setCellValue({row: 0, col: 6+i, value: e.target.value}))} className='flex-' />
-                            <Button type='button' variant="ghost" onClick={()=>dispatch(removeColumn(6+i))} className='cursor-pointer hover:text-red-500'>x</Button>
+                            <Input value={columnName} onChange={(e)=>dispatch(setCellValue({row: 0, col: numberOfBaseColumns+i, value: e.target.value}))} className='flex-' />
+                            <Button type='button' variant="ghost" onClick={()=>dispatch(removeColumn(numberOfBaseColumns+i))} className='cursor-pointer hover:text-red-500'>x</Button>
                         </div>
                 </TableHead>))
                 }

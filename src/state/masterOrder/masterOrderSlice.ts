@@ -3,7 +3,7 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 const initialState: Omit<tf_MasterOrder, 'line_ids'> = {
     "project_name": '',
-    "client_id": 0,
+    "client_id": "",
     "date_order": '',
     "date_expected": '',
     "virtual_inventory": false,
@@ -27,10 +27,26 @@ const masterOrderSlice = createSlice({
         setFieldValue: (state, action: PayloadAction<{ field: string; value: any }>) => {
             const { field, value } = action.payload;
             (state.value as any)[field] = value;
+        },
+        setForm: (state, action) => {
+            state.value.project_name = action.payload.project_name;
+            state.value.client_id = String(action.payload.client_id?.[0] || '');
+            state.value.date_order = action.payload.date_order;
+            state.value.date_expected = action.payload.date_expected;
+            state.value.virtual_inventory = action.payload.virtual_inventory;
+            state.value.shipper_id = action.payload.shipper_id?.[0];
+            state.value.shipping_cost = action.payload.shipping_cost;
+            state.value.shipping_charge = action.payload.shipping_charge;
+            state.value.currency_id = action.payload.currency_id?.[0];
+            state.value.commission_rate = action.payload.commission_rate;
+            state.value.auto_sync_documents = action.payload.auto_sync_documents;
+        },
+        clearForm: (state) => {
+            state.value = initialState;
         }
     }
 
 });
 
 export default masterOrderSlice.reducer;
-export const {setValue, setFieldValue} = masterOrderSlice.actions;
+export const {setValue, setFieldValue, setForm, clearForm } = masterOrderSlice.actions;

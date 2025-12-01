@@ -2,7 +2,7 @@
 // todo: make a validation function for master order
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
 import { Calendar, DollarSign, FileText, Save, Truck } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useAllResource, useCreateResourceWithChild } from "@/hooks/useResource";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -25,11 +25,13 @@ class Props {
     "masterOrder"?: tr_MasterOrder;
     "lines"?: tr_MasterOrderLine[];
 }
-import { setFieldValue } from "@/state/masterOrder/masterOrderSlice";
+import { clearForm, setFieldValue, setForm } from "@/state/masterOrder/masterOrderSlice";
+import { clearTable, setTable } from "@/state/masterOrder/masterOrderLinesSlice";
 
 export default function MasterOrderFormC({ masterOrder, lines}:Props) {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+
     // States
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<any>(null);
@@ -39,7 +41,21 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
     // const {data: products, isLoading: isProductsLoading} = useAllResource("product");
     const masterOrderForm = useSelector((state: RootState) => state.masterOrder.value)
     const masterOrderLines = useSelector((state: RootState) => state.masterOrderLines.value);
-
+    
+    useEffect(()=>{        
+        if(masterOrder) {
+            console.log("masterOrder");
+            console.log(masterOrder);
+            console.log(lines);
+            
+            
+            dispatch(setForm(masterOrder))
+            dispatch(setTable(lines))
+        } else {
+            dispatch(clearTable());
+            dispatch(clearForm());
+        }
+    },[masterOrder, lines])
 
     // Computes
     const shippingMargin = Number(masterOrderForm.shipping_charge) - Number(masterOrderForm.shipping_cost);
@@ -76,8 +92,8 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
             name: mol[2],
             quantity: Number(mol[3]),
             price_cost: Number(mol[4]),
-            price_sale: 0,
-            vendor_id: 2,
+            price_sale: Number(mol[5]),
+            vendor_id: Number(mol[6]),
         }))
         const orderLines = await createProducts(masterOrderLineForm);
         console.log("order Lines", orderLines);
@@ -113,7 +129,9 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
             .then((res) => {
                 console.log("[submit success]", res);
                 toast.success("Master Order created successfully");
-                navigate(`/master-orders/${res[0]}`);
+                navigate(`/master-orders/${res}`);
+                dispatch(clearTable());
+                dispatch(clearForm());
             }).catch((err) => {
                 console.log("[submit fail]",err);
                 toast.error("Failed to create Master Order");
@@ -148,12 +166,12 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
                             <CardContent className="flex flex-row gap-3 bg-[#fcfcfc]">
                                 <Field>
                                     <FieldLabel>Project Name</FieldLabel>
-                                    <Input type="text" name="project_name" defaultValue={masterOrder?.project_name} value={masterOrderForm.project_name} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))} />
+                                    <Input type="text" name="project_name" value={masterOrderForm.project_name} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))} />
                                     <FieldError>{errors?.project_name}</FieldError>
                                 </Field>
                                 <Field>
                                     <FieldLabel>Client</FieldLabel>
-                                    <Select name="client_id" disabled={isContactsLoading} value={String(masterOrderForm.client_id)} onValueChange={(v)=>dispatch(setFieldValue({field: "client_id", value: v}))}>
+                                    <Select name="client_id" disabled={isContactsLoading} value={masterOrderForm.client_id ||""} onValueChange={(v)=>dispatch(setFieldValue({field: "client_id", value: v}))}>
                                         <SelectTrigger className={cn(`w-[180px]`, errors?.client_id && "border-red-500")}>
                                             <SelectValue placeholder="Select a Client" />
                                         </SelectTrigger>
@@ -237,8 +255,7 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
                             <CardContent className="flex flex-row gap-3 bg-[#fcfcfc]">
                                 <Field>
                                     <FieldLabel>Currency</FieldLabel>
-                                    {/* <Input type="number" name="currency_id" defaultValue={masterOrder?.currency_id?.[0]} /> need to make it select */}
-                                    <Select name="currency_id" disabled={isCurrencyLoading} defaultValue={String(masterOrder?.currency_id?.[0])} value={String(masterOrderForm.currency_id)} onValueChange={(value)=>dispatch(setFieldValue({field: 'currency_id', value}))}>
+                                    <Select name="currency_id" disabled={isCurrencyLoading} value={String(masterOrderForm.currency_id)} onValueChange={(value)=>dispatch(setFieldValue({field: 'currency_id', value}))}>
                                         <SelectTrigger className={cn(`w-[180px]`, errors?.client_id && "border-red-500")}>
                                             <SelectValue placeholder="Select a Currency" />
                                         </SelectTrigger>
@@ -255,7 +272,7 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
                                 </Field>
                                 <Field>
                                     <FieldLabel>Total Profit</FieldLabel>
-                                    <Input type="number" readOnly disabled defaultValue={masterOrder?.amount_profit} />
+                                    <Input type="number" readOnly disabled value={ masterOrder?.amount_profit} />
                                 </Field>
                             </CardContent>
                         </Card>

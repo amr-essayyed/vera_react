@@ -25,6 +25,8 @@ export function useProducts() {
 				if(line.image instanceof File){
 					imageBase64 = await imageToBase64(line.image);
 				}
+				console.log(imageBase64);
+				
 
 				const product: tc_Product = {
 					name: line.product_name,

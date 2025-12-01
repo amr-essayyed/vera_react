@@ -2,7 +2,7 @@ import type { tc_MasterOrderLine, tf_MasterOrderLine, tu_MasterOrderLine } from 
 
 export class tf_MasterOrder {
     "project_name": string;
-    "client_id": number;
+    "client_id": string;
     "date_order": string;
     "date_expected": string;
     "virtual_inventory": boolean;
