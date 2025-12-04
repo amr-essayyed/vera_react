@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { supplierFormSchema, type SupplierForm } from "@/types/supplier";
+import { contactFormSchema, type ContactForm } from "@/types/contact";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,8 +18,8 @@ export default function SupplierCreatePage() {
         register,
         handleSubmit,
         formState: { errors },
-    } = useForm<SupplierForm>({
-        resolver: zodResolver(supplierFormSchema),
+    } = useForm<ContactForm>({
+        resolver: zodResolver(contactFormSchema),
         defaultValues: {
             name: "",
             email: "",
@@ -35,7 +35,7 @@ export default function SupplierCreatePage() {
         },
     });
 
-    const onSubmit = async (data: SupplierForm) => {
+    const onSubmit = async (data: ContactForm) => {
         setIsSubmitting(true);
         try {
             // TODO: Implement API call to create supplier

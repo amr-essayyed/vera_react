@@ -120,6 +120,7 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
                 "price_sale": line.price_sale,
                 "quantity": line.quantity,
                 "vendor_id": line.vendor_id,
+                "currency_id": masterOrderForm.currency_id
             })) ,
         }
         console.log("[submitting]: ", newMasterOrder);
@@ -164,11 +165,13 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="flex flex-row gap-3 bg-[#fcfcfc]">
+
                                 <Field>
                                     <FieldLabel>Project Name</FieldLabel>
                                     <Input type="text" name="project_name" value={masterOrderForm.project_name} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))} />
                                     <FieldError>{errors?.project_name}</FieldError>
                                 </Field>
+
                                 <Field>
                                     <FieldLabel>Client</FieldLabel>
                                     <Select name="client_id" disabled={isContactsLoading} value={masterOrderForm.client_id ||""} onValueChange={(v)=>dispatch(setFieldValue({field: "client_id", value: v}))}>
@@ -179,9 +182,9 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
                                             {contacts && contacts.map((c:any)=> <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem> )}
                                         </SelectContent>
                                     </Select>
-                                    {/* <Input type="number" name="client_id"/> */}
                                     <FieldError>{errors?.client_id}</FieldError>
                                 </Field>
+                                
                             </CardContent>
                         </Card>
 

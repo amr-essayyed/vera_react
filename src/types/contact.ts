@@ -13,7 +13,7 @@ export const many2oneSchema = z.union([
 export const many2manySchema = z.array(many2oneSchema);
 
 /** Supplier schema based on res.partner model */
-export const supplierSchema = z.object({
+export const contactSchema = z.object({
   id: z.number().int().positive().optional(),
   name: z.string().min(1),
   email: z.string().email().optional().or(z.literal("")),
@@ -36,7 +36,7 @@ export const supplierSchema = z.object({
 }).catchall(z.any());
 
 /** Form schema for supplier creation/editing */
-export const supplierFormSchema = z.object({
+export const contactFormSchema = z.object({
   name: z.string().min(1, "Company name is required"),
   email: z.string().email("Invalid email format").optional().or(z.literal("")),
   phone: z.string().optional(),
@@ -53,5 +53,5 @@ export const supplierFormSchema = z.object({
 });
 
 /** Handy TS types */
-export type Supplier = z.infer<typeof supplierSchema>;
-export type SupplierForm = z.infer<typeof supplierFormSchema>;
+export type Contact = z.infer<typeof contactSchema>;
+export type ContactForm = z.infer<typeof contactFormSchema>;

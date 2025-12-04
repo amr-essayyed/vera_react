@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useResourceById } from "@/hooks/useResource";
-import type { Supplier } from "@/types/supplier";
+import type { Contact } from "@/types/contact";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,7 @@ import {
 
 export default function SupplierDetailPage() {
     const { id } = useParams<{ id: string }>();
-    const { data: supplier, isLoading, error } = useResourceById("contact", id!) as { data: Supplier | undefined, isLoading: boolean, error: any };
+    const { data: supplier, isLoading, error } = useResourceById("contact", id!) as { data: Contact | undefined, isLoading: boolean, error: any };
 
     if (isLoading) {
         return (

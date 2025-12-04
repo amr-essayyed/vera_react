@@ -1,9 +1,9 @@
-import type { Supplier } from "@/types/supplier";
+import type { Contact } from "@/types/contact";
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
 import { Building2, Mail, Phone, Globe } from "lucide-react";
 
-export default function SupplierRow({ supplier }: { supplier: Supplier }) {
+export default function SupplierRow({ supplier }: { supplier: Contact }) {
 	const formatAddress = () => {
 		const parts = [supplier?.street, supplier?.city, supplier?.zip].filter(Boolean);
 		return parts.length > 0 ? parts.join(", ") : "-";

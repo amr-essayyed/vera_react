@@ -1,10 +1,16 @@
 import { Button } from '@/components/ui/button';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useAllResource } from '@/hooks/useResource';
+import { cn } from '@/lib/utils';
 import { addColumn, addLine, completeTableTobe, removeColumn, removeLine, setCellValue } from '@/state/masterOrder/masterOrderLinesSlice';
 import type { RootState } from '@/state/store';
-import { Trash, Upload } from 'lucide-react';
+import type { Contact } from '@/types/contact';
+import { CheckIcon, ChevronsUpDownIcon, Trash, Upload } from 'lucide-react';
 import type React from 'react';
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 export default function MasterOrderLineTableContr() {
@@ -13,10 +19,12 @@ export default function MasterOrderLineTableContr() {
 
     // States
     const table = useSelector((state: RootState) => state.masterOrderLines.value);
+    const {data: contacts, isLoading: isContactsLoading, isError: isContactsError}= useAllResource('contact')    
     const numberOfRows = table.length - 1;
     const numberOfColumns = table[0].length;
     const numberOfBaseColumns =8;
     const numberOfCustomColumns = (table[0].length)-numberOfBaseColumns;
+    const [open, setOpen] = useState<number | null>(null)
     
     const handlePaste = (e: React.ClipboardEvent<HTMLTableCellElement>, r: number, c: number) => {
         e.preventDefault();
@@ -35,7 +43,7 @@ export default function MasterOrderLineTableContr() {
         for(let line of lines) {
             pastedTable.push(line.split("\t"));
         }
-        console.log("arr");
+        console.log("pastedTable");
         console.log(pastedTable);
         
         if(pastedTable.length > table.length) {
@@ -54,6 +62,7 @@ export default function MasterOrderLineTableContr() {
 
     const handlePasteImage = (e: React.ClipboardEvent<HTMLInputElement>, r: number, c: number) => {
         e.preventDefault();
+        console.log("item");
 
         const items = e.clipboardData.items;
         if(items.length > table.length) {
@@ -61,13 +70,15 @@ export default function MasterOrderLineTableContr() {
         }
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
+            console.log(item);
+            
 
             if (item.kind === "string") {
                 item.getAsString((str) => {
                     const imgMatch = str.match(/<img[^>]+src="([^"]+)"/);
                     if(imgMatch){
                         const base64 = imgMatch[1]; // the Base64 data URL
-                        dispatch(setCellValue({row: r+1+i, col: c, value: base64 }))
+                        dispatch(setCellValue({row: r+1+i, col: c, value: base64 }));
                     } 
                 });
             }
@@ -77,7 +88,7 @@ export default function MasterOrderLineTableContr() {
                 if (file){
                     const reader = new FileReader();
                     reader.readAsDataURL(file);
-                    reader.onload = ()=> dispatch(setCellValue({row: r+1+i, col: c, value: reader.result }))
+                    reader.onload = ()=> dispatch(setCellValue({row: r+1+i, col: c, value: reader.result }));
                 }
             }
         }
@@ -111,9 +122,56 @@ export default function MasterOrderLineTableContr() {
         }
     }
 
-    const textCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='text' value={table[r+1][c] || ''} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value }))} ></Input></TableCell>;
-    const numberCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='number' value={String(parseFloat(table[r+1][c]))|| ''} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value }))}></Input></TableCell>;
+    const textCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='text' value={table[r+1][c] || ''} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value || '' }))} ></Input></TableCell>;
+    const numberCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='number' value={table[r+1][c]===undefined || table[r+1][c] === '' ?'':String(parseFloat(table[r+1][c]))} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value || '' }))} /></TableCell>;
     const imageCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border"><Upload className="w-6 h-6 text-gray-500 absolute cursor-pointer" /><Input  type='file' accept='image/*' onPaste={(e)=>handlePasteImage(e,r,c)} className='w-6 h-6 float-left absolute cursor-pointer opacity-0' onChange={(e)=>handleImageChange(e,r,c)}></Input><img src={table[r+1][c]||undefined} className='max-w-20 max-h-20' /></TableCell>;
+    const selectCell = (r: number,c: number) => (
+        <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}>
+            <Popover open={open === r} onOpenChange={(isOpen) => setOpen(isOpen ? r : null)}>
+                <PopoverTrigger asChild>
+                    <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open === r}
+                        className="w-[200px] justify-between"
+                    >
+                    {table[r+1][c]
+                        ? contacts && contacts.find((contact: Contact) => String(contact.id) === table[r+1][c])?.name
+                        : "Select Vendor..."}
+                    <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0">
+                    <Command>
+                        <CommandInput placeholder="Search Vendor..." />
+                        <CommandList>
+                            <CommandEmpty>No Vendor found.</CommandEmpty>
+                            <CommandGroup>
+                                {contacts && contacts.map((contact: Contact) => (
+                                    <CommandItem
+                                        key={contact.id}
+                                        value={contact.name}   // 👈 searchable name
+                                        onSelect={() => {
+                                            dispatch(setCellValue({row: r+1, col: c, value: String(contact.id ||'') }))
+                                            setOpen(null)
+                                        }}
+                                    >
+                                        <CheckIcon
+                                        className={cn(
+                                            "mr-2 h-4 w-4",
+                                            table[r+1][c] === String(contact.id) ? "opacity-100" : "opacity-0"
+                                        )}
+                                        />
+                                        {contact.name}
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        </CommandList>
+                    </Command>
+                </PopoverContent>
+            </Popover>
+        </TableCell>
+    );
 
     const tableRow =(k: number) => ( 
         <TableRow key={k}>
@@ -124,7 +182,7 @@ export default function MasterOrderLineTableContr() {
             {numberCell(k,3)}
             {numberCell(k,4)}
             {numberCell(k,5)}
-            {numberCell(k,6)}
+            {selectCell(k,6)}
             <TableCell></TableCell>
             {[...Array(numberOfCustomColumns)].map((_,i)=>(textCell(k,i+numberOfBaseColumns)))}
             <TableCell className="border"><Button type="button" variant="destructive" onClick={() => dispatch(removeLine(k+1))}><Trash /></Button></TableCell>
