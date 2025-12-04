@@ -6,7 +6,7 @@ export class tf_MasterOrder {
     "date_order": string;
     "date_expected": string;
     "virtual_inventory": boolean;
-    "shipper_id": number;
+    "shipper_id": string;
     "shipping_cost": number;
     "shipping_charge": number;
     "currency_id": number;

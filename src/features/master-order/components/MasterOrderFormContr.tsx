@@ -75,17 +75,6 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
         e.preventDefault();
         setIsSubmitting(true);
 
-        //* validate
-        const validationErrors = [] as any//validateMasterOrder(formEntries); // const validationErrors = validateBill(formEntries);
-        
-        setErrors(validationErrors);
-        console.log("validationErrors", validationErrors);
-        
-        if (!isEmpty(validationErrors)) {
-            setIsSubmitting(false);
-            return;
-        }
-
         // //* prepare
         const masterOrderLineForm: tf_MasterOrderLine[] = masterOrderLines.slice(1).map((mol)=>({
             image: mol[0],
@@ -109,9 +98,9 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
             virtual_inventory: masterOrderForm.virtual_inventory, //todo:  make it true and false
             shipping_cost: masterOrderForm.shipping_cost,
             shipping_charge: masterOrderForm.shipping_charge,
-            shipper_id: masterOrderForm.shipper_id,
-            currency_id: masterOrderForm.currency_id || 1,
-            commission_rate: masterOrderForm.commission_rate,
+            shipper_id: Number(masterOrderForm.shipper_id),
+            currency_id: Number(masterOrderForm.currency_id) || 1,
+            commission_rate: Number(masterOrderForm.commission_rate),
             auto_sync_documents: masterOrderForm.auto_sync_documents,
             line_ids: orderLines.map((line) => ({
                 "name": line.name,
@@ -121,7 +110,7 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
                 "price_sale": line.price_sale,
                 "quantity": line.quantity,
                 "vendor_id": line.vendor_id,
-                "currency_id": masterOrderForm.currency_id
+                "currency_id": Number(masterOrderForm.currency_id) || 1
             })) ,
         }
         console.log("[submitting]: ", newMasterOrder);
@@ -232,12 +221,12 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
                                         </Field>
                                         <Field orientation="horizontal" className="flex flex-col">
                                             <FieldLabel className="w-full">Shipper</FieldLabel>
-                                            <Select name="shipper_id" disabled={isContactsLoading} value={String(masterOrderForm.shipper_id)} onValueChange={(value)=>dispatch(setFieldValue({field: 'shipper_id', value}))}>
+                                            <Select name="shipper_id" disabled={isContactsLoading} value={masterOrderForm.shipper_id || ""} onValueChange={(v)=>dispatch(setFieldValue({field: 'shipper_id', value: v}))}>
                                                 <SelectTrigger className={cn(`w-[180px]`, errors?.shipper_id && "border-red-500", "w-full")}>
                                                     <SelectValue placeholder="Select a Shipper" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {contacts && contacts.map((c:any)=> <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem> )}
+                                                    {contacts && contacts.map((c:any)=> <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem> )}
                                                 </SelectContent>
                                             </Select>
                                             <FieldError>{errors?.shipper_id}</FieldError>

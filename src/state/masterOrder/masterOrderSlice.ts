@@ -7,7 +7,7 @@ const initialState: Omit<tf_MasterOrder, 'line_ids'> = {
     "date_order": '',
     "date_expected": '',
     "virtual_inventory": false,
-    "shipper_id": 0,
+    "shipper_id": "",
     "shipping_cost": 0,
     "shipping_charge": 0,
     "currency_id": 0,
@@ -34,7 +34,7 @@ const masterOrderSlice = createSlice({
             state.value.date_order = action.payload.date_order;
             state.value.date_expected = action.payload.date_expected;
             state.value.virtual_inventory = action.payload.virtual_inventory;
-            state.value.shipper_id = action.payload.shipper_id?.[0];
+            state.value.shipper_id = String(action.payload.shipper_id?.[0] || '');
             state.value.shipping_cost = action.payload.shipping_cost;
             state.value.shipping_charge = action.payload.shipping_charge;
             state.value.currency_id = action.payload.currency_id?.[0];
