@@ -27,3 +27,4 @@ jobs:
             npm run build &&
             rm -r /var/www/reactapp/*
             mv dist/* /var/www/reactapp/
+          "
