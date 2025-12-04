@@ -25,6 +25,9 @@ export default function MasterOrderLineTableContr() {
     const numberOfBaseColumns =8;
     const numberOfCustomColumns = (table[0].length)-numberOfBaseColumns;
     const [open, setOpen] = useState<number | null>(null)
+
+    // Computes
+    const subtotals = table.slice(1).map((row)=> ((Number(row[3])||0) * (Number(row[5  ])||0)) )
     
     const handlePaste = (e: React.ClipboardEvent<HTMLTableCellElement>, r: number, c: number) => {
         e.preventDefault();
@@ -183,7 +186,8 @@ export default function MasterOrderLineTableContr() {
             {numberCell(k,4)}
             {numberCell(k,5)}
             {selectCell(k,6)}
-            <TableCell></TableCell>
+            {/* sales subtotal */}
+            <TableCell>{subtotals[k]}</TableCell>
             {[...Array(numberOfCustomColumns)].map((_,i)=>(textCell(k,i+numberOfBaseColumns)))}
             <TableCell className="border"><Button type="button" variant="destructive" onClick={() => dispatch(removeLine(k+1))}><Trash /></Button></TableCell>
         </TableRow>

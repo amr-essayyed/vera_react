@@ -29,6 +29,7 @@ import { clearForm, setFieldValue, setForm } from "@/state/masterOrder/masterOrd
 import { clearTable, setTable } from "@/state/masterOrder/masterOrderLinesSlice";
 
 export default function MasterOrderFormC({ masterOrder, lines}:Props) {
+    // Hooks
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
@@ -60,10 +61,10 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
     // Computes
     const shippingMargin = Number(masterOrderForm.shipping_charge) - Number(masterOrderForm.shipping_cost);
 
-    const purchaseCost = masterOrderLines.slice(1).reduce((sum,row)=>Number(sum)+(Number(row[3]||0)*Number(row[4]||0)), 0) || 0;
+    const purchaseCost = masterOrderLines.slice(1).reduce((sum,row)=>Number(sum)+((Number(row[3])||0)*(Number(row[5])||0)), 0);
     const amountCost = Number(purchaseCost) + Number(masterOrderForm.shipping_cost);
     // const amountCommission = Number(purchaseCost) + (Number(purchaseCost) * (1+(Number(masterOrderForm.commission_rate)/100)));
-    const amountCommission =  (Number(purchaseCost) * ((Number(masterOrderForm.commission_rate)/100)));
+    const amountCommission =  Number(purchaseCost) * ((Number(masterOrderForm.commission_rate)/100));
     
     const totalExpenses = masterOrder?.total_expenses || 0;
     const amountSale = amountCost + amountCommission;
@@ -333,10 +334,10 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
 
                                 <table>
                                     <tbody>
-                                        <tr><td className="pr-4"><span className="font-bold">Untaxed Amount: </span></td><td>$ {amountCost || masterOrder?.amount_cost}</td></tr>
-                                        <tr><td className="pr-4"><span className="font-bold">Comission: </span></td><td>$ {amountCommission || masterOrder?.amount_commission}</td></tr>
-                                        <tr><td className="pr-4"><span className="font-bold">Expenses: </span></td><td>$ {totalExpenses || masterOrder?.total_expenses}</td></tr>
-                                        <tr><td className="pr-4"><span className="font-bold">Shipping: </span></td><td>$ {masterOrderForm.shipping_charge || masterOrder?.shipping_charge}</td></tr>
+                                        <tr><td className="pr-4"><span className="font-bold">Untaxed Amount: </span></td><td>$ {amountCost || masterOrder?.amount_cost || 0}</td></tr>
+                                        <tr><td className="pr-4"><span className="font-bold">Comission: </span></td><td>$ {amountCommission || masterOrder?.amount_commission || 0}</td></tr>
+                                        <tr><td className="pr-4"><span className="font-bold">Expenses: </span></td><td>$ {totalExpenses || masterOrder?.total_expenses || 0}</td></tr>
+                                        <tr><td className="pr-4"><span className="font-bold">Shipping: </span></td><td>$ {masterOrderForm.shipping_charge || masterOrder?.shipping_charge || 0}</td></tr>
                                     </tbody>
                                     <tbody>
                                         <tr><td className="pr-4 pt-4"><span className="font-bold">Total: </span></td><td className="text-2xl font-bold">$ {amountSale || 0}</td></tr>
