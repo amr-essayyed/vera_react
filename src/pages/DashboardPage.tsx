@@ -1,5 +1,8 @@
 export default function DashboardPage() {
   return (
-    <div>DashboardPage</div>
+    <div>
+      <div>DashboardPage</div>
+      <p>this is deploted auto</p>
+    </div>
   )
 }
