@@ -1,7 +1,7 @@
 // Todo: make a component for select> it needs to take a model to fetch its data in infinite scroll mode. and to enable searching in server.
 // todo: make a validation function for master order
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
-import { Calendar, DollarSign, FileText, Save, Truck } from "lucide-react";
+import { Calendar, DollarSign, FileText, Plus, Save, Truck } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { useAllResource, useCreateResourceWithChild } from "@/hooks/useResource";
 import { toast } from "sonner";
@@ -145,141 +145,169 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
         <Card className="bg-neutral-50">
             <CardHeader>
                 <CardTitle>
-                    {masterOrder? `${masterOrder.name}`: "New"}
+                    <div>
+                        {masterOrder? `${masterOrder.name}`: "New"}
+                        
+                    </div>
                 </CardTitle>
                 <CardDescription>
                     Master Order
                 </CardDescription>
                 <CardAction>
-                    <span className="text-gray-400">Statge:</span> <Badge>{masterOrder && (masterOrder?.stage_id as any)?.[1]}</Badge>
+                    <div className="flex flex-row-reverse gap-2">
+                        {masterOrder && <><span className="text-gray-400">Statge:</span> <Badge>{masterOrder && (masterOrder?.stage_id as any)?.[1]}</Badge></>}
+                        <Button><Plus />Create Sales Order</Button>
+                        <Button><Plus />Create purchase Order</Button>
+                    </div>
                 </CardAction>
             </CardHeader>
             <CardContent>
+
                 <form onSubmit={handleSubmit}>
-                    <FieldGroup>
+                    <div className="grid grid-cols-2 gap-6">
+                        <FieldGroup>
 
-                        <Card>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>
+                                        <FileText className="inline-block"/> <span>BASIC INFO</span>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="flex flex-row gap-3 bg-[#fcfcfc]">
+
+                                    <Field>
+                                        <FieldLabel>Project Name</FieldLabel>
+                                        <Input type="text" name="project_name" value={masterOrderForm.project_name} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))} />
+                                        <FieldError>{errors?.project_name}</FieldError>
+                                    </Field>
+
+                                    <Field>
+                                        <FieldLabel>Client</FieldLabel>
+                                        <Select name="client_id" disabled={isContactsLoading} value={masterOrderForm.client_id ||""} onValueChange={(v)=>dispatch(setFieldValue({field: "client_id", value: v}))}>
+                                            <SelectTrigger className={cn(`w-[180px]`, errors?.client_id && "border-red-500")}>
+                                                <SelectValue placeholder="Select a Client" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {contacts && contacts.map((c:any)=> <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem> )}
+                                            </SelectContent>
+                                        </Select>
+                                        <FieldError>{errors?.client_id}</FieldError>
+                                    </Field>
+                                    
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>
+                                        <Calendar className="inline-block"/> <span>TIMELINE</span>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="flex flex-row gap-3 bg-[#fcfcfc]">
+                                    <Field>
+                                        <FieldLabel>Order Date</FieldLabel>
+                                        <Input type="datetime-local" name="date_order" value={masterOrderForm.date_order} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))}/>
+                                        <FieldError>{errors?.date_order}</FieldError>
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel>Expected Delivery</FieldLabel>
+                                        <Input type="date" name="date_expected" value={masterOrderForm.date_expected} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))}/>
+                                        <FieldError>{errors?.date_expected}</FieldError>
+                                    </Field>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>
+                                        <Truck className="inline-block"/> <span>Shipping</span>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="bg-[#fcfcfc]">
+                                        <Field orientation="horizontal" className="flex flex-col items-start mb-4">
+                                            <FieldLabel>Virtual Inventory (Dropship/D2D)</FieldLabel>
+                                            <Checkbox name="virtual_inventory" checked={masterOrderForm.virtual_inventory} onCheckedChange={(value)=>dispatch(setFieldValue({field: 'virtual_inventory', value}))}/>
+                                            <FieldError>{errors?.virtual_inventory}</FieldError>
+                                        </Field>
+                                        <Field orientation="horizontal" className="flex flex-col">
+                                            <FieldLabel className="w-full">Shipper</FieldLabel>
+                                            <Select name="shipper_id" disabled={isContactsLoading} value={String(masterOrderForm.shipper_id)} onValueChange={(value)=>dispatch(setFieldValue({field: 'shipper_id', value}))}>
+                                                <SelectTrigger className={cn(`w-[180px]`, errors?.shipper_id && "border-red-500", "w-full")}>
+                                                    <SelectValue placeholder="Select a Shipper" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {contacts && contacts.map((c:any)=> <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem> )}
+                                                </SelectContent>
+                                            </Select>
+                                            <FieldError>{errors?.shipper_id}</FieldError>
+                                        </Field>
+                                        <div className="flex flex-row gap-2 mt-4">
+                                            <Field className="flex-col">
+                                                <FieldLabel>Shipping Cost</FieldLabel>
+                                                <Input type="number" name="shipping_cost"  value={masterOrderForm.shipping_cost} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))}/>
+                                                <FieldError>{errors?.shipping_cost}</FieldError>
+                                            </Field>
+                                            <Field className="flex-col">
+                                                <FieldLabel>Shipping Charge</FieldLabel>
+                                                <Input type="number" name="shipping_charge" value={masterOrderForm.shipping_charge} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))} />
+                                                <FieldError>{errors?.shipping_charge}</FieldError>
+                                            </Field>
+                                            <Field className="flex-col align-top">
+                                                <FieldLabel>Shipping Margin</FieldLabel>
+                                                <Input type="number" readOnly disabled value={shippingMargin || 0} style={{color: shippingMargin==0? "black": shippingMargin>0? "green" : "red"}} />
+                                            </Field>
+                                        </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>
+                                        <DollarSign className="inline-block"/> <span>Finantial</span>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="flex flex-row gap-3 bg-[#fcfcfc]">
+                                    <Field>
+                                        <FieldLabel>Currency</FieldLabel>
+                                        <Select name="currency_id" disabled={isCurrencyLoading} value={String(masterOrderForm.currency_id)} onValueChange={(value)=>dispatch(setFieldValue({field: 'currency_id', value}))}>
+                                            <SelectTrigger className={cn(`w-[180px]`, errors?.client_id && "border-red-500")}>
+                                                <SelectValue placeholder="Select a Currency" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {currencies && currencies.map((c:any)=> <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem> )}
+                                            </SelectContent>
+                                        </Select>
+                                        <FieldError>{errors?.currency_id}</FieldError>
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel>Commission Rate (%)</FieldLabel>
+                                        <Input type="number" min={0} max={100} name="commission_rate" value={masterOrderForm.commission_rate} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))} />
+                                        <FieldError>{errors?.commission_rate}</FieldError>
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel>Total Profit</FieldLabel>
+                                        <Input type="number" readOnly disabled value={ masterOrder?.amount_profit} />
+                                    </Field>
+                                </CardContent>
+                            </Card>
+                        </FieldGroup>
+                        
+                        <Card className="h-fit"> 
                             <CardHeader>
                                 <CardTitle>
-                                    <FileText className="inline-block"/> <span>BASIC INFO</span>
+                                    Related Orders
                                 </CardTitle>
+                                <CardContent className="p-0">
+                                    <div className="flex flex-col gap-2">
+                                        <Button variant={"outline"} className="justify-start bg-gray-100 hover:bg-blue-400">Sales Order</Button>
+                                        <Button variant={"outline"} className="justify-start bg-gray-100 hover:bg-blue-400">Purchase Orders</Button>
+                                        <Button variant={"outline"} className="justify-start bg-gray-100 hover:bg-blue-400">Shipping</Button>
+                                        <Button variant={"outline"} className="justify-start bg-gray-100 hover:bg-blue-400">Payment</Button>
+                                    </div>
+                                </CardContent>
                             </CardHeader>
-                            <CardContent className="flex flex-row gap-3 bg-[#fcfcfc]">
-
-                                <Field>
-                                    <FieldLabel>Project Name</FieldLabel>
-                                    <Input type="text" name="project_name" value={masterOrderForm.project_name} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))} />
-                                    <FieldError>{errors?.project_name}</FieldError>
-                                </Field>
-
-                                <Field>
-                                    <FieldLabel>Client</FieldLabel>
-                                    <Select name="client_id" disabled={isContactsLoading} value={masterOrderForm.client_id ||""} onValueChange={(v)=>dispatch(setFieldValue({field: "client_id", value: v}))}>
-                                        <SelectTrigger className={cn(`w-[180px]`, errors?.client_id && "border-red-500")}>
-                                            <SelectValue placeholder="Select a Client" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {contacts && contacts.map((c:any)=> <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem> )}
-                                        </SelectContent>
-                                    </Select>
-                                    <FieldError>{errors?.client_id}</FieldError>
-                                </Field>
-                                
-                            </CardContent>
                         </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>
-                                    <Calendar className="inline-block"/> <span>TIMELINE</span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex flex-row gap-3 bg-[#fcfcfc]">
-                                <Field>
-                                    <FieldLabel>Order Date</FieldLabel>
-                                    <Input type="datetime-local" name="date_order" value={masterOrderForm.date_order} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))}/>
-                                    <FieldError>{errors?.date_order}</FieldError>
-                                </Field>
-                                <Field>
-                                    <FieldLabel>Expected Delivery</FieldLabel>
-                                    <Input type="date" name="date_expected" value={masterOrderForm.date_expected} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))}/>
-                                    <FieldError>{errors?.date_expected}</FieldError>
-                                </Field>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>
-                                    <Truck className="inline-block"/> <span>Shipping</span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex flex-row gap-3 bg-[#fcfcfc]">
-                                <Field orientation="horizontal" className="flex-col"> 
-                                    <FieldLabel>Virtual Inventory (Dropship/D2D)</FieldLabel>
-                                    <Checkbox name="virtual_inventory" checked={masterOrderForm.virtual_inventory} onCheckedChange={(value)=>dispatch(setFieldValue({field: 'virtual_inventory', value}))}/>
-                                    <FieldError>{errors?.virtual_inventory}</FieldError>
-                                </Field>
-                                <Field orientation="horizontal" className="flex-col "> 
-                                    <FieldLabel className="text-left">Shipper</FieldLabel>
-                                    <Select name="shipper_id" disabled={isContactsLoading} value={String(masterOrderForm.shipper_id)} onValueChange={(value)=>dispatch(setFieldValue({field: 'shipper_id', value}))}>
-                                        <SelectTrigger className={cn(`w-[180px]`, errors?.shipper_id && "border-red-500")}>
-                                            <SelectValue placeholder="Select a Shipper" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {contacts && contacts.map((c:any)=> <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem> )}
-                                        </SelectContent>
-                                    </Select>
-                                    <FieldError>{errors?.shipper_id}</FieldError>
-                                </Field>
-                                <Field className="flex-col">
-                                    <FieldLabel>Shipping Cost</FieldLabel>
-                                    <Input type="number" name="shipping_cost"  value={masterOrderForm.shipping_cost} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))}/>
-                                    <FieldError>{errors?.shipping_cost}</FieldError>
-                                </Field>
-                                <Field className="flex-col">
-                                    <FieldLabel>Shipping Charge</FieldLabel>
-                                    <Input type="number" name="shipping_charge" value={masterOrderForm.shipping_charge} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))} />
-                                    <FieldError>{errors?.shipping_charge}</FieldError>
-                                </Field>
-                                <Field className="flex-col align-top">
-                                    <FieldLabel>Shipping Margin</FieldLabel>
-                                    <Input type="number" readOnly disabled value={shippingMargin || 0} style={{color: shippingMargin==0? "black": shippingMargin>0? "green" : "red"}} />
-                                </Field>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>
-                                    <DollarSign className="inline-block"/> <span>Finantial</span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex flex-row gap-3 bg-[#fcfcfc]">
-                                <Field>
-                                    <FieldLabel>Currency</FieldLabel>
-                                    <Select name="currency_id" disabled={isCurrencyLoading} value={String(masterOrderForm.currency_id)} onValueChange={(value)=>dispatch(setFieldValue({field: 'currency_id', value}))}>
-                                        <SelectTrigger className={cn(`w-[180px]`, errors?.client_id && "border-red-500")}>
-                                            <SelectValue placeholder="Select a Currency" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {currencies && currencies.map((c:any)=> <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem> )}
-                                        </SelectContent>
-                                    </Select>
-                                    <FieldError>{errors?.currency_id}</FieldError>
-                                </Field>
-                                <Field>
-                                    <FieldLabel>Commission Rate (%)</FieldLabel>
-                                    <Input type="number" min={0} max={100} name="commission_rate" value={masterOrderForm.commission_rate} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))} />
-                                    <FieldError>{errors?.commission_rate}</FieldError>
-                                </Field>
-                                <Field>
-                                    <FieldLabel>Total Profit</FieldLabel>
-                                    <Input type="number" readOnly disabled value={ masterOrder?.amount_profit} />
-                                </Field>
-                            </CardContent>
-                        </Card>
-                    </FieldGroup>
+                    </div>
                     
                     <FieldGroup className="pt-6">
                         <Field>
@@ -333,9 +361,7 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
                             </Button>
                         </Field>
                     </FieldGroup> 
-                            
-                                
-                                
+                             
                 </form>
             </CardContent>
         </Card>
