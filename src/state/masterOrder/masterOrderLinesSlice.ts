@@ -3,7 +3,8 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState: string[][] = 
     [
         // MasterOrderLineFormFields,
-        ["Image", "Product", "Description", "Qty", "Unit", "Sale Price", "Vendor", "Subtotal",],
+     // ["Image", "Product", "Description", "Qty",    "Unit",   "Sale Price", "Vendor", "Subtotal",],
+        ["Image", "text",    "text",        "number", "number", "number",     "text",   "number",],
         [],
     ]
 

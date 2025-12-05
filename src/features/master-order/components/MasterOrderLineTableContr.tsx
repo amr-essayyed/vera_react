@@ -10,7 +10,7 @@ import type { RootState } from '@/state/store';
 import type { Contact } from '@/types/contact';
 import { CheckIcon, ChevronsUpDownIcon, Trash, Upload } from 'lucide-react';
 import type React from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 export default function MasterOrderLineTableContr() {
@@ -27,7 +27,7 @@ export default function MasterOrderLineTableContr() {
     const [open, setOpen] = useState<number | null>(null)
 
     // Computes
-    const subtotals = table.slice(1).map((row)=> ((Number(row[3])||0) * (Number(row[5  ])||0)) )
+    const subtotals = table.slice(1).map((row)=> ((Number(row[3])||0) * (Number(row[5])||0)) )
     
     const handlePaste = (e: React.ClipboardEvent<HTMLTableCellElement>, r: number, c: number) => {
         e.preventDefault();
@@ -49,14 +49,20 @@ export default function MasterOrderLineTableContr() {
         console.log("pastedTable");
         console.log(pastedTable);
         
-        if(pastedTable.length > table.length) {
+        if(pastedTable.length > table.length-1) {
             dispatch(completeTableTobe(pastedTable.length))
         }
         for(let i=0; i<pastedTable.length; i++) {
             for(let j=0; j<numberOfColumns-c; j++) {
-                console.log(pastedTable[i][j]);
-                
-                dispatch(setCellValue({row: r+1+i, col: c+j, value: pastedTable[i][j] }))
+                // console.log(i, j);
+                // console.log(pastedTable[i][j]);
+                let pastedValue = pastedTable[i][j];
+                if(pastedTable[i][j]){
+                    if(table[0][c+j] === 'number') {                        
+                        pastedValue = pastedTable[i][j].replace(/[^0-9.-]/g, '').replace(/\.(?=.*\.)/, '').replace(/(?!^)-/g, '')
+                    }
+                    dispatch(setCellValue({row: r+1+i, col: c+j, value: pastedValue}))
+                }
             }
         }
         
@@ -126,7 +132,8 @@ export default function MasterOrderLineTableContr() {
     }
 
     const textCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='text' value={table[r+1][c] || ''} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value || '' }))} ></Input></TableCell>;
-    const numberCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='number' value={table[r+1][c]===undefined || table[r+1][c] === '' ?'':String(parseFloat(table[r+1][c]))} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value || '' }))} /></TableCell>;
+    // const numberCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='number' value={table[r+1][c]===undefined || table[r+1][c] === '' ?'':table[r+1][c].replace(/[^0-9.-]/g, '').replace(/\.(?=.*\.)/, '').replace(/(?!^)-/g, '')} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value || '' }))} /></TableCell>;
+    const numberCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='number' value={table[r+1][c]===undefined || table[r+1][c] === '' ?'':table[r+1][c]} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value || '' }))} /></TableCell>;
     const imageCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border"><Upload className="w-6 h-6 text-gray-500 absolute cursor-pointer" /><Input  type='file' accept='image/*' onPaste={(e)=>handlePasteImage(e,r,c)} className='w-6 h-6 float-left absolute cursor-pointer opacity-0' onChange={(e)=>handleImageChange(e,r,c)}></Input><img src={table[r+1][c]||undefined} className='max-w-20 max-h-20' /></TableCell>;
     const selectCell = (r: number,c: number) => (
         <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}>
