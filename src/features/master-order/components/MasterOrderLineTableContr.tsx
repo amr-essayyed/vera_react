@@ -12,6 +12,7 @@ import { CheckIcon, ChevronsUpDownIcon, Trash, Upload } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { parseGoogleSheetsClipboard } from '../utils/parseGoogleSheetsClipboard';
 
 export default function MasterOrderLineTableContr() {
     // Hooks
@@ -29,7 +30,7 @@ export default function MasterOrderLineTableContr() {
     // Computes
     const subtotals = table.slice(1).map((row)=> ((Number(row[3])||0) * (Number(row[5])||0)) )
     
-    const handlePaste = (e: React.ClipboardEvent<HTMLTableCellElement>, r: number, c: number) => {
+    const handlePaste = async (e: React.ClipboardEvent<HTMLTableCellElement>, r: number, c: number) => {
         e.preventDefault();
         const textRaw = e.clipboardData.getData("text");
         const text = textRaw
@@ -41,16 +42,17 @@ export default function MasterOrderLineTableContr() {
         console.log("text");
         console.log(text);
         
-        var pastedTable = []
-        const lines = text.split('\n');
-        for(let line of lines) {
-            pastedTable.push(line.split("\t"));
-        }
+        var pastedTable = await parseGoogleSheetsClipboard(e);
+        // var pastedTable = []
+        // const lines = text.split('\n');
+        // for(let line of lines) {
+        //     pastedTable.push(line.split("\t"));
+        // }
         console.log("pastedTable");
         console.log(pastedTable);
         
-        if(pastedTable.length > table.length-1) {
-            dispatch(completeTableTobe(pastedTable.length))
+        if(pastedTable.length+r > table.length-1) {
+            dispatch(completeTableTobe(pastedTable.length+r))
         }
         for(let i=0; i<pastedTable.length; i++) {
             for(let j=0; j<numberOfColumns-c; j++) {
@@ -185,7 +187,7 @@ export default function MasterOrderLineTableContr() {
 
     const tableRow =(k: number) => ( 
         <TableRow key={k}>
-            <TableCell>{k}</TableCell>
+            <TableCell>{k+1}</TableCell>
             {imageCell(k,0)}
             {textCell(k,1)}
             {textCell(k,2)}
