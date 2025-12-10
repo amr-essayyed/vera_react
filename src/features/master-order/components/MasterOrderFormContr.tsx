@@ -100,10 +100,10 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
                 toast.error("Failed to create Master Order");
                 const errors = MOValidation?.error.flatten().fieldErrors;
                 setErrors(errors);
-                for (const key of Object.keys(errors)){
-                    toast.error(`for field '${key}': ${(errors as any)[key][0]}`);
+                // for (const key of Object.keys(errors)){
+                //     toast.error(`for field '${key}': ${(errors as any)[key][0]}`);
 
-                }
+                // }
                 // toast.error("Validation errors:", result.error);
                 
             }
@@ -113,10 +113,10 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
                 toast.error("Failed to create Master Order");
                 const errors = MOLValidation?.error.format();
                 setMOLErrors(errors);
-                for (const key of Object.keys(errors)){
-                    toast.error(`for field '${key}': ${(errors as any)[key][0]}`);
+                // for (const key of Object.keys(errors)){
+                //     toast.error(`for field '${key}': ${(errors as any)[key][0]}`);
 
-                }
+                // }
                 // toast.error("Validation errors:", result.error);
             }
 
@@ -134,7 +134,7 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
             project_name: masterOrderForm.project_name as string,
             client_id: Number(masterOrderForm.client_id),
             date_order: odooDatetimeFormat(masterOrderForm.date_order),
-            date_expected: masterOrderForm.date_expected,
+            date_expected: masterOrderForm.date_expected || undefined,
             virtual_inventory: masterOrderForm.virtual_inventory, //todo:  make it true and false
             shipping_cost: Number(masterOrderForm.shipping_cost),
             shipping_charge: Number(masterOrderForm.shipping_charge),
