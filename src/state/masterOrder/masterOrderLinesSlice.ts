@@ -5,7 +5,7 @@ const initialState: string[][] =
         // MasterOrderLineFormFields,
      // ["Image", "Product", "Description", "Qty",    "Unit",   "Sale Price", "Vendor", "Subtotal",],
         ["Image", "text",    "text",        "number", "number", "number",     "text",   "number",],
-        [],
+        ["", "",    "",        "", "", "",     "",   "",],
     ]
 
 const masterOrderLinesSlice = createSlice({
@@ -39,7 +39,8 @@ const masterOrderLinesSlice = createSlice({
             state.value[action.payload.row][action.payload.col] = action.payload.value;
         },
         addLine: (state) => {
-            state.value.push([])
+            const row = [...Array(state.value[0].length)].map(() => '')
+            state.value.push(row)
         },
         completeTableTobe: (state, action) => {
             while(state.value.length-1 < action.payload) {

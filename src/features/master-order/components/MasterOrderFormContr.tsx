@@ -1,21 +1,20 @@
 // Todo: make a component for select> it needs to take a model to fetch its data in infinite scroll mode. and to enable searching in server.
-// todo: make a validation function for master order
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
 import { Calendar, DollarSign, FileText, Plus, Save, Truck } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { useAllResource, useCreateResourceWithChild } from "@/hooks/useResource";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { isEmpty } from "lodash";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
-import type { tc_MasterOrder, tr_MasterOrder } from "@/types/masterOrder";
+import { zf_MasterOrder, type tc_MasterOrder, type tr_MasterOrder } from "@/types/masterOrder";
 import { Input } from "@/components/ui/input";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { odooDatetimeFormat } from "@/lib/datetime";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useProducts } from "@/hooks/useOrderLines";
-import { tf_MasterOrderLine, type tr_MasterOrderLine } from "@/types/masterOrderLine";
+import { tf_MasterOrderLine, zf_MasterOrderLine, zf_MasterOrderLines, type tr_MasterOrderLine } from "@/types/masterOrderLine";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import MasterOrderLineTableContr from "./MasterOrderLineTableContr";
@@ -29,20 +28,32 @@ import { clearForm, setFieldValue, setForm } from "@/state/masterOrder/masterOrd
 import { clearTable, setTable } from "@/state/masterOrder/masterOrderLinesSlice";
 
 export default function MasterOrderFormC({ masterOrder, lines}:Props) {
-    // Hooks
-    const navigate = useNavigate();
-    const dispatch = useDispatch();
-
     // States
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<any>(null);
+    const [MOLerrors, setMOLErrors] = useState<any>(null);
     const {mutateAsync: createMasterOrder} = useCreateResourceWithChild("masterOrder", "line_ids");
     const { data: contacts, isLoading: isContactsLoading } = useAllResource("contact");
     const {data: currencies, isLoading: isCurrencyLoading} = useAllResource("currency");
     // const {data: products, isLoading: isProductsLoading} = useAllResource("product");
     const masterOrderForm = useSelector((state: RootState) => state.masterOrder.value)
     const masterOrderLines = useSelector((state: RootState) => state.masterOrderLines.value);
-    
+
+    // Computes
+    const shippingMargin = Number(masterOrderForm.shipping_charge) - Number(masterOrderForm.shipping_cost);
+    const purchaseCost = masterOrderLines.slice(1).reduce((sum,row)=>Number(sum)+((Number(row[3])||0)*(Number(row[5])||0)), 0);
+    const amountCost = Number(purchaseCost) + Number(masterOrderForm.shipping_cost);
+    // const amountCommission = Number(purchaseCost) + (Number(purchaseCost) * (1+(Number(masterOrderForm.commission_rate)/100)));
+    const amountCommission =  Number(purchaseCost) * ((Number(masterOrderForm.commission_rate)/100));
+    const totalExpenses = masterOrder?.total_expenses || 0;
+    const amountSale = amountCost + amountCommission;
+
+    // Hooks
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const { createProducts } = useProducts();
+
+    // lifeCycle Hooks
     useEffect(()=>{        
         if(masterOrder) {
             console.log("masterOrder");
@@ -57,20 +68,8 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
             dispatch(clearForm());
         }
     },[masterOrder, lines])
-
-    // Computes
-    const shippingMargin = Number(masterOrderForm.shipping_charge) - Number(masterOrderForm.shipping_cost);
-
-    const purchaseCost = masterOrderLines.slice(1).reduce((sum,row)=>Number(sum)+((Number(row[3])||0)*(Number(row[5])||0)), 0);
-    const amountCost = Number(purchaseCost) + Number(masterOrderForm.shipping_cost);
-    // const amountCommission = Number(purchaseCost) + (Number(purchaseCost) * (1+(Number(masterOrderForm.commission_rate)/100)));
-    const amountCommission =  Number(purchaseCost) * ((Number(masterOrderForm.commission_rate)/100));
     
-    const totalExpenses = masterOrder?.total_expenses || 0;
-    const amountSale = amountCost + amountCommission;
-
-    const { createProducts } = useProducts();
-
+    // Handlers
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -85,19 +84,60 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
             price_sale: Number(mol[5]),
             vendor_id: Number(mol[6]),
         }))
+
+        console.log("masterOrder form", masterOrderForm);
+        console.log("masterOrderLine form", masterOrderLineForm);
+
+        // Validation
+        const MOValidation = zf_MasterOrder.safeParse(masterOrderForm);
+        const MOLValidation = zf_MasterOrderLines.safeParse(masterOrderLineForm);
+        if (MOValidation.success && MOLValidation.success) {
+          console.log("MO Validated data:", MOValidation.data);
+          console.log("MOL Validated data:", MOLValidation.data);
+        } else { 
+            if(MOValidation.error ) {
+                console.error("MO Validation errors:", MOValidation?.error.flatten().fieldErrors);
+                toast.error("Failed to create Master Order");
+                const errors = MOValidation?.error.flatten().fieldErrors;
+                setErrors(errors);
+                for (const key of Object.keys(errors)){
+                    toast.error(`for field '${key}': ${(errors as any)[key][0]}`);
+
+                }
+                // toast.error("Validation errors:", result.error);
+                
+            }
+            
+            if(MOLValidation.error ) {
+                console.error("MOL Validation errors:", MOLValidation?.error.format());
+                toast.error("Failed to create Master Order");
+                const errors = MOLValidation?.error.format();
+                setMOLErrors(errors);
+                for (const key of Object.keys(errors)){
+                    toast.error(`for field '${key}': ${(errors as any)[key][0]}`);
+
+                }
+                // toast.error("Validation errors:", result.error);
+            }
+
+            setIsSubmitting(false);
+            return
+        }
+
         const orderLines = await createProducts(masterOrderLineForm);
         console.log("order Lines", orderLines);
         
-        console.log("masterOrder form", masterOrderForm);
         
+
+        // create
         const newMasterOrder: tc_MasterOrder = {
             project_name: masterOrderForm.project_name as string,
             client_id: Number(masterOrderForm.client_id),
             date_order: odooDatetimeFormat(masterOrderForm.date_order),
             date_expected: masterOrderForm.date_expected,
             virtual_inventory: masterOrderForm.virtual_inventory, //todo:  make it true and false
-            shipping_cost: masterOrderForm.shipping_cost,
-            shipping_charge: masterOrderForm.shipping_charge,
+            shipping_cost: Number(masterOrderForm.shipping_cost),
+            shipping_charge: Number(masterOrderForm.shipping_charge),
             shipper_id: Number(masterOrderForm.shipper_id),
             currency_id: Number(masterOrderForm.currency_id) || 1,
             commission_rate: Number(masterOrderForm.commission_rate),
@@ -167,7 +207,7 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
 
                                     <Field>
                                         <FieldLabel>Project Name</FieldLabel>
-                                        <Input type="text" name="project_name" value={masterOrderForm.project_name} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))} />
+                                        <Input type="text" name="project_name" value={masterOrderForm.project_name} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))} className={cn(`w-[180px]`, errors?.project_name && "border-red-500")} />
                                         <FieldError>{errors?.project_name}</FieldError>
                                     </Field>
 
@@ -196,12 +236,12 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
                                 <CardContent className="flex flex-row gap-3 bg-[#fcfcfc]">
                                     <Field>
                                         <FieldLabel>Order Date</FieldLabel>
-                                        <Input type="datetime-local" name="date_order" value={masterOrderForm.date_order} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))}/>
+                                        <Input type="datetime-local" name="date_order" value={masterOrderForm.date_order} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))} className={cn(`w-[180px]`, errors?.date_order && "border-red-500")} />
                                         <FieldError>{errors?.date_order}</FieldError>
                                     </Field>
                                     <Field>
                                         <FieldLabel>Expected Delivery</FieldLabel>
-                                        <Input type="date" name="date_expected" value={masterOrderForm.date_expected} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))}/>
+                                        <Input type="date" name="date_expected" value={masterOrderForm.date_expected} onChange={(e)=>dispatch(setFieldValue({field: e.target.name, value: e.target.value}))} className={cn(`w-[180px]`, errors?.date_expected && "border-red-500")}/>
                                         <FieldError>{errors?.date_expected}</FieldError>
                                     </Field>
                                 </CardContent>
@@ -260,7 +300,7 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
                                     <Field>
                                         <FieldLabel>Currency</FieldLabel>
                                         <Select name="currency_id" disabled={isCurrencyLoading} value={String(masterOrderForm.currency_id)} onValueChange={(value)=>dispatch(setFieldValue({field: 'currency_id', value}))}>
-                                            <SelectTrigger className={cn(`w-[180px]`, errors?.client_id && "border-red-500")}>
+                                            <SelectTrigger className={cn(`w-[180px]`, errors?.currency_id && "border-red-500")}>
                                                 <SelectValue placeholder="Select a Currency" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -307,7 +347,7 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
                             
                             {/* <MasterOrderLineTableCustom name="line_ids" data={lines} vendors={contacts} products={products} setPurchaseCost={setPurchaseCost}/> */}
                             {/* <MasterOrderLineTable name="line_ids" data={lines} /> */}
-                            <MasterOrderLineTableContr />
+                            <MasterOrderLineTableContr errors={MOLerrors} />
 
                             {/* <div style={{overflow: "scroll"}}>
                                 <ExcelLikeTable />

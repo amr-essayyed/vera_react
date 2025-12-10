@@ -1,3 +1,5 @@
+import z from "zod";
+
 export class tf_MasterOrderLine {
     "image"?: File | string;
     "product_name": string;
@@ -8,6 +10,18 @@ export class tf_MasterOrderLine {
     "price_sale"?: number;  
 }
 export const MasterOrderLineFormFields = Object.keys(new tf_MasterOrderLine());
+
+export const zf_MasterOrderLine = z.object({
+    "image": z.file().or(z.string()).optional(),
+    "product_name": z.string().nonempty("Must enter a product name"),
+    "name": z.string().nonempty("Must enter a description"),  // todo: replace "name" with "description" after Odoo model modification.
+    "vendor_id": z.number().optional(),
+    "quantity": z.number(),
+    "price_cost": z.number().optional(),
+    "price_sale": z.number().optional(),  
+})
+
+export const zf_MasterOrderLines = z.array(zf_MasterOrderLine);
 
 export class tc_MasterOrderLine {
     "image_1920"?: string;// File;

@@ -13,8 +13,9 @@ import type React from 'react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { parseGoogleSheetsClipboard } from '../utils/parseGoogleSheetsClipboard';
+import { FieldError } from '@/components/ui/field';
 
-export default function MasterOrderLineTableContr() {
+export default function MasterOrderLineTableContr({errors}:any) {
     // Hooks
     const dispatch = useDispatch();
 
@@ -133,8 +134,9 @@ export default function MasterOrderLineTableContr() {
         }
     }
 
-    const textCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='text' value={table[r+1][c] || ''} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value || '' }))} ></Input></TableCell>;
-    // const numberCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='number' value={table[r+1][c]===undefined || table[r+1][c] === '' ?'':table[r+1][c].replace(/[^0-9.-]/g, '').replace(/\.(?=.*\.)/, '').replace(/(?!^)-/g, '')} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value || '' }))} /></TableCell>;
+    const textCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='text' value={table[r+1][c] || ''} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value || '' }))}></Input></TableCell>;
+    const prodcutNameCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='text' value={table[r+1][c] || ''} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value || '' }))} className={cn(`w-[180px]`, errors?.[r]?.product_name?._errors?.[0] && "border-red-500")} /><FieldError>{errors?.[r]?.product_name?._errors?.[0]}</FieldError></TableCell>;
+    const descriptionCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='text' value={table[r+1][c] || ''} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value || '' }))} className={cn(`w-[180px]`, errors?.[r]?.name?._errors?.[0] && "border-red-500")} /><FieldError>{errors?.[r]?.name?._errors?.[0]}</FieldError></TableCell>;
     const numberCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e)=>handlePaste(e,r,c)}><Input  type='number' value={table[r+1][c]===undefined || table[r+1][c] === '' ?'':table[r+1][c]} onChange={(e) => dispatch(setCellValue({row: r+1, col: c, value: e.target.value || '' }))} /></TableCell>;
     const imageCell = (r: number,c: number) => <TableCell key={`${r}${c}`} className="border"><Upload className="w-6 h-6 text-gray-500 absolute cursor-pointer" /><Input  type='file' accept='image/*' onPaste={(e)=>handlePasteImage(e,r,c)} className='w-6 h-6 float-left absolute cursor-pointer opacity-0' onChange={(e)=>handleImageChange(e,r,c)}></Input><img src={table[r+1][c]||undefined} className='max-w-20 max-h-20' /></TableCell>;
     const selectCell = (r: number,c: number) => (
@@ -189,8 +191,8 @@ export default function MasterOrderLineTableContr() {
         <TableRow key={k}>
             <TableCell>{k+1}</TableCell>
             {imageCell(k,0)}
-            {textCell(k,1)}
-            {textCell(k,2)}
+            {prodcutNameCell(k,1)}
+            {descriptionCell(k,2)}
             {numberCell(k,3)}
             {numberCell(k,4)}
             {numberCell(k,5)}

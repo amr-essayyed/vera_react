@@ -3,16 +3,16 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 const initialState: Omit<tf_MasterOrder, 'line_ids'> = {
     "project_name": '',
-    "client_id": "",
+    "client_id": '',
     "date_order": '',
     "date_expected": '',
     "virtual_inventory": false,
-    "shipper_id": "",
-    "shipping_cost": 0,
-    "shipping_charge": 0,
-    "currency_id": 0,
-    "commission_rate": 0,
-    "auto_sync_documents": 0,
+    "shipper_id": '',
+    "shipping_cost": '0',
+    "shipping_charge": '0',
+    "currency_id": '0',
+    "commission_rate": '0',
+    "auto_sync_documents": false,
 }
 
 const masterOrderSlice = createSlice({

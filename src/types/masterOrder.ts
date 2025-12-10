@@ -1,4 +1,5 @@
-import type { tc_MasterOrderLine, tf_MasterOrderLine, tu_MasterOrderLine } from "./masterOrderLine";
+import z from "zod";
+import { zf_MasterOrderLine, type tc_MasterOrderLine, type tf_MasterOrderLine, type tu_MasterOrderLine } from "./masterOrderLine";
 
 export class tf_MasterOrder {
     "project_name": string;
@@ -7,13 +8,28 @@ export class tf_MasterOrder {
     "date_expected": string;
     "virtual_inventory": boolean;
     "shipper_id": string;
-    "shipping_cost": number;
-    "shipping_charge": number;
-    "currency_id": number;
-    "commission_rate": number;
-    "auto_sync_documents": number;
+    "shipping_cost": string;
+    "shipping_charge": string;
+    "currency_id": string;
+    "commission_rate": string;
+    "auto_sync_documents": boolean;
     "line_ids": tf_MasterOrderLine[];
 }
+
+export const zf_MasterOrder = z.object({
+    "project_name": z.string().min(3, "enter at least 3 characters name"),
+    "client_id": z.string().regex(/^\d+$/, "Must select a client"),
+    "date_order": z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/,"Must select a date"), // todo: make it required by setting regex to date pattern
+    "date_expected": z.string().regex(/^\d{4}-\d{2}-\d{2}$/).or(z.literal("")).optional(),
+    "virtual_inventory": z.boolean().optional(),
+    "shipper_id": z.string().regex(/^\d+$/, "Must select a shipper").or(z.literal("")).optional(),
+    "shipping_cost": z.string().optional(),
+    "shipping_charge": z.string().optional(),
+    "currency_id": z.string().regex(/^\d+$/, "Must select a client").optional(),
+    "commission_rate": z.string().regex(/^\d+$/, "Must enter a numeric value").optional(),
+    "auto_sync_documents": z.boolean().optional(),
+    "line_ids": zf_MasterOrderLine.optional(),
+})
 
 export class tc_MasterOrder {
     "project_name": string;
@@ -26,7 +42,7 @@ export class tc_MasterOrder {
     "shipping_charge"?: number;
     "currency_id"?: number;
     "commission_rate"?: number;
-    "auto_sync_documents"?: number;
+    "auto_sync_documents"?: boolean;
     "line_ids"?: tc_MasterOrderLine[];
 }
 
