@@ -26,6 +26,7 @@ class Props {
 }
 import { clearForm, setFieldValue, setForm } from "@/state/masterOrder/masterOrderSlice";
 import { clearTable, setTable } from "@/state/masterOrder/masterOrderLinesSlice";
+import SearchableSelect from "@/components/SearchableSelect";
 
 export default function MasterOrderFormC({ masterOrder, lines}:Props) {
     // States
@@ -213,14 +214,18 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
 
                                     <Field>
                                         <FieldLabel>Client</FieldLabel>
-                                        <Select name="client_id" disabled={isContactsLoading} value={masterOrderForm.client_id ||""} onValueChange={(v)=>dispatch(setFieldValue({field: "client_id", value: v}))}>
+                                        {/* <Select name="client_id" disabled={isContactsLoading} value={masterOrderForm.client_id ||""} onValueChange={(v)=>dispatch(setFieldValue({field: "client_id", value: v}))}>
                                             <SelectTrigger className={cn(`w-[180px]`, errors?.client_id && "border-red-500")}>
                                                 <SelectValue placeholder="Select a Client" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {contacts && contacts.map((c:any)=> <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem> )}
                                             </SelectContent>
-                                        </Select>
+                                        </Select> */}
+                                        <SearchableSelect 
+                                            value={masterOrderForm.client_id ||""}
+                                            setValue={(v: string)=>dispatch(setFieldValue({field: "client_id", value: v}))}
+                                        />
                                         <FieldError>{errors?.client_id}</FieldError>
                                     </Field>
                                     
