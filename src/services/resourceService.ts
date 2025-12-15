@@ -10,8 +10,8 @@ import apiClient from "./apiClient.ts";
 import type { WithStringKeys } from "@/types/withStringKeyes.ts";
 import type { IdRef } from "@/types/odooSchemas.ts";
 
-// var databaseName = "verareact"
-var databaseName = "test"
+var databaseName = "verareact"
+// var databaseName = "test"
 
 class JsonRpcResourceService {
     // C
@@ -148,6 +148,80 @@ class JsonRpcResourceService {
                     "search_read",               
                     [condition],
                     serverResource.fields
+                ]
+            },
+            "id": 1
+        };
+        
+        console.log("body", body);
+        const response: ApiResponse  = await apiClient('jsonrpc', {method:"POST", body:JSON.stringify(body)});
+        console.log("response", response);
+
+        if(! response.ok) {
+            throw new Error("[service] Client Error: " + response.errorMessage as string)
+        }else {
+            if(response.parsedBody.error){
+                console.error("[service] JSON-RPC Error: ", response.parsedBody.error);
+                throw new Error("[service] JSON-RPC Error: " + response.parsedBody.error.data.message as string)
+            }
+            return response.parsedBody.result;
+        }
+    }
+    
+    static async getAlll(resourceName: Model) { // array of arrays and logic operators ["|", ["prop", "op", "val"], ...]
+        const serverResource = resourceNameResolver[resourceName];
+        
+        const body = {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+                "service": "object",
+                "method": "execute_kw",
+                "args": [
+                    databaseName, // database name               
+                    2,          // user id                    
+                    "admin",    // 
+                    serverResource?.modelName || resourceName,
+                    "search_read",               
+                    [],
+                    {}
+                ]
+            },
+            "id": 1
+        };
+        
+        console.log("body", body);
+        const response: ApiResponse  = await apiClient('jsonrpc', {method:"POST", body:JSON.stringify(body)});
+        console.log("response", response);
+
+        if(! response.ok) {
+            throw new Error("[service] Client Error: " + response.errorMessage as string)
+        }else {
+            if(response.parsedBody.error){
+                console.error("[service] JSON-RPC Error: ", response.parsedBody.error);
+                throw new Error("[service] JSON-RPC Error: " + response.parsedBody.error.data.message as string)
+            }
+            return response.parsedBody.result;
+        }
+    }
+    
+    static async getReport(reportName: string) { // array of arrays and logic operators ["|", ["prop", "op", "val"], ...]
+        // const serverResource = resourceNameResolver[resourceName];
+        
+        const body = {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+                "service": "object",
+                "method": "execute_kw",
+                "args": [
+                    databaseName, // database name               
+                    2,          // user id                    
+                    "admin",    // 
+                    reportName,            
+                    "get_lines",               
+                    [],
+                    {}
                 ]
             },
             "id": 1

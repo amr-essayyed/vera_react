@@ -14,7 +14,7 @@ import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle }
 import { odooDatetimeFormat } from "@/lib/datetime";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useProducts } from "@/hooks/useOrderLines";
-import { tf_MasterOrderLine, zf_MasterOrderLine, zf_MasterOrderLines, type tr_MasterOrderLine } from "@/types/masterOrderLine";
+import { tf_MasterOrderLine, zf_MasterOrderLines, type tr_MasterOrderLine } from "@/types/masterOrderLine";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import MasterOrderLineTableContr from "./MasterOrderLineTableContr";
