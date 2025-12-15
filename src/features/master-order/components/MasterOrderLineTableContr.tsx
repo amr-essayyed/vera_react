@@ -8,12 +8,13 @@ import { cn } from '@/lib/utils';
 import { addColumn, addLine, completeTableTobe, removeColumn, removeLine, setCellValue } from '@/state/masterOrder/masterOrderLinesSlice';
 import type { RootState } from '@/state/store';
 import type { Contact } from '@/types/contact';
-import { CheckIcon, ChevronsUpDownIcon, Trash, Upload } from 'lucide-react';
+import { CheckIcon, ChevronsUpDownIcon, FileSpreadsheet, Trash, Upload } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { parseGoogleSheetsClipboard } from '../utils/parseGoogleSheetsClipboard';
 import { FieldError } from '@/components/ui/field';
+import ExcelJS from 'exceljs';
 
 export default function MasterOrderLineTableContr({errors}:any) {
     // Hooks
@@ -21,7 +22,7 @@ export default function MasterOrderLineTableContr({errors}:any) {
 
     // States
     const table = useSelector((state: RootState) => state.masterOrderLines.value);
-    const {data: contacts, isLoading: isContactsLoading, isError: isContactsError}= useAllResource('contact')    
+    const {data: contacts}= useAllResource('contact')    
     const numberOfRows = table.length - 1;
     const numberOfColumns = table[0].length;
     const numberOfBaseColumns =8;
@@ -204,6 +205,201 @@ export default function MasterOrderLineTableContr({errors}:any) {
         </TableRow>
     )
 
+    // Helper function to process base64 images for Excel
+    const processImageForExcel = (base64String: string): ArrayBuffer | null => {
+        try {
+            if (!base64String || !base64String.startsWith('data:image/')) {
+                return null;
+            }
+            
+            // Extract the base64 data (remove the data:image/...;base64, prefix)
+            const base64Data = base64String.split(',')[1];
+            if (!base64Data) return null;
+            
+            // Convert base64 to ArrayBuffer
+            const binaryString = atob(base64Data);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        } catch (error) {
+            console.error('Error processing image:', error);
+            return null;
+        }
+    }
+
+    // Helper function to get image extension from base64 string
+    const getImageExtension = (base64String: string): 'png' | 'jpeg' | 'gif' => {
+        if (base64String.includes('data:image/png')) return 'png';
+        if (base64String.includes('data:image/jpeg') || base64String.includes('data:image/jpg')) return 'jpeg';
+        if (base64String.includes('data:image/gif')) return 'gif';
+        return 'png'; // default
+    }
+
+    const handleExport = async () => {
+        try {
+            // Create a new workbook using ExcelJS
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Master Order Lines');
+            
+            // Define headers
+            const headers = [
+                '#', 'Image', 'Product Name', 'Description', 'Qty', 
+                'Unit Price', 'Sale Price', 'Vendor', 'Subtotal',
+                ...table[0].slice(numberOfBaseColumns)
+            ];
+            
+            // Add header row
+            const headerRow = worksheet.addRow(headers);
+            
+            // Style header row
+            headerRow.eachCell((cell) => {
+                cell.font = { bold: true };
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: 'FFF3F4F6' }
+                };
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+                cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            });
+            
+            // Set column widths
+            worksheet.columns = [
+                { width: 5 },   // #
+                { width: 15 },  // Image
+                { width: 20 },  // Product Name
+                { width: 25 },  // Description
+                { width: 8 },   // Qty
+                { width: 12 },  // Unit Price
+                { width: 12 },  // Sale Price
+                { width: 20 },  // Vendor
+                { width: 12 },  // Subtotal
+                ...Array(numberOfCustomColumns).fill({ width: 15 })
+            ];
+            
+            // Add data rows with images
+            for (let i = 0; i < numberOfRows; i++) {
+                const rowData = [];
+                
+                // Row number
+                rowData.push(i + 1);
+                
+                // Image placeholder (we'll add the actual image after)
+                rowData.push('');
+                
+                // Product name
+                rowData.push(table[i + 1][1] || '');
+                
+                // Description
+                rowData.push(table[i + 1][2] || '');
+                
+                // Qty (convert to number if possible)
+                const qty = table[i + 1][3];
+                rowData.push(qty && !isNaN(Number(qty)) ? Number(qty) : qty || '');
+                
+                // Unit Price (convert to number if possible)
+                const unitPrice = table[i + 1][4];
+                rowData.push(unitPrice && !isNaN(Number(unitPrice)) ? Number(unitPrice) : unitPrice || '');
+                
+                // Sale Price (convert to number if possible)
+                const salePrice = table[i + 1][5];
+                rowData.push(salePrice && !isNaN(Number(salePrice)) ? Number(salePrice) : salePrice || '');
+                
+                // Vendor - convert ID to name if possible
+                const vendorId = table[i + 1][6];
+                const vendor = contacts?.find((contact: Contact) => String(contact.id) === vendorId);
+                rowData.push(vendor ? vendor.name : vendorId || '');
+                
+                // Subtotal (calculated)
+                rowData.push(subtotals[i] || 0);
+                
+                // Custom columns
+                for (let j = numberOfBaseColumns; j < table[0].length; j++) {
+                    rowData.push(table[i + 1][j] || '');
+                }
+                
+                // Add the row
+                const excelRow = worksheet.addRow(rowData);
+                
+                // Set row height to accommodate images
+                excelRow.height = 60;
+                
+                // Style data cells with borders
+                excelRow.eachCell((cell) => {
+                    cell.border = {
+                        top: { style: 'thin' },
+                        left: { style: 'thin' },
+                        bottom: { style: 'thin' },
+                        right: { style: 'thin' }
+                    };
+                    cell.alignment = { vertical: 'middle' };
+                });
+                
+                // Handle image embedding
+                const imageData = table[i + 1][0];
+                if (imageData && imageData.startsWith('data:image/')) {
+                    try {
+                        const imageBuffer = processImageForExcel(imageData);
+                        if (imageBuffer) {
+                            const imageExtension = getImageExtension(imageData);
+                            
+                            // Add image to workbook
+                            const imageId = workbook.addImage({
+                                buffer: imageBuffer,
+                                extension: imageExtension,
+                            });
+                            
+                            // Add image to worksheet at the specific cell
+                            worksheet.addImage(imageId, {
+                                tl: { col: 1, row: i + 1 }, // Image column (B), data row
+                                ext: { width: 80, height: 50 }, // Image size
+                                editAs: 'oneCell'
+                            });
+                        }
+                    } catch (imageError) {
+                        console.error(`Error adding image for row ${i + 1}:`, imageError);
+                        // Set a text indicator if image fails
+                        excelRow.getCell(2).value = 'Image Error';
+                    }
+                }
+            }
+            
+            // Generate filename with current date
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const filename = `master-order-lines-${dateStr}.xlsx`;
+            
+            // Write and download the file
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { 
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            });
+            
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            
+            console.log(`Excel file exported: ${filename}`);
+            
+        } catch (error) {
+            console.error('Error exporting to Excel:', error);
+            alert('Failed to export Excel file. Please try again.');
+        }
+    }
+
     return (
         <>
         {/* Buttons */}
@@ -211,6 +407,7 @@ export default function MasterOrderLineTableContr({errors}:any) {
             <Button type="button" onClick={()=>dispatch(addLine())}>+ Add Line</Button>
             <Button type="button" onClick={()=>dispatch(addColumn("Custom"))}>+ Add Column</Button>
             <Button type="button" onClick={()=>console.log("value: ", table)}>Show me Value</Button>
+            <Button type="button" onClick={handleExport}><FileSpreadsheet />Export table</Button>
         </div>
 
         {/* Table */}

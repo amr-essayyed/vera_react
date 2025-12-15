@@ -1,7 +1,7 @@
 // Todo: make a component for select> it needs to take a model to fetch its data in infinite scroll mode. and to enable searching in server.
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
-import { Calendar, DollarSign, FileText, Plus, Save, Truck } from "lucide-react";
+import { Calendar, DollarSign, FileSpreadsheet, FileText, Plus, Save, Truck } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { useAllResource, useCreateResourceWithChild } from "@/hooks/useResource";
 import { toast } from "sonner";
@@ -148,7 +148,7 @@ export default function MasterOrderFormC({ masterOrder, lines}:Props) {
                 "image_1920": line.image,
                 "product_id": line.product_id,
                 "price_cost": line.price_cost,
-                "price_sale": line.price_sale,
+                "price_sale": line.price_sale || line.price_cost,
                 "quantity": line.quantity,
                 "vendor_id": line.vendor_id,
                 "currency_id": Number(masterOrderForm.currency_id) || 1
