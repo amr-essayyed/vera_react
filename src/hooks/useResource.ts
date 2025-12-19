@@ -8,7 +8,7 @@ import type { IdRef, Many2oneSchema } from "@/types/odooSchemas";
 function useAllResource(resourceName: Model, condition?: any[]) {
 	return useQuery({
 		queryKey: [resourceName],
-		queryFn: async () => await ResourceService.getAll(resourceName, condition),
+		queryFn: async () => await ResourceService.getAlll(resourceName, condition),
 		retry: 3,
 		retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
 	});
