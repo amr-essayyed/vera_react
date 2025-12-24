@@ -2,18 +2,19 @@ import { useAllResource } from "@/hooks/useResource";
 import LoadingSubPage from "./LoadingSubPage";
 import type { WithId } from "@/types/withId";
 import type { Model } from "@/resourceNameResolver";
+import { words } from "lodash";
 
 type ResourceTableProps = {
 	ResourceRow: React.ComponentType<any>;
 	resourceName: Model;
-    condition?: any[];
+	condition?: any[];
 	columns: string[];
 };
 
 export default function ResourceTable<T extends WithId>({ ResourceRow, resourceName, condition, columns }: ResourceTableProps) {
 	const { data, isLoading, error } = useAllResource(resourceName, condition);
 
-	if (isLoading) return <LoadingSubPage message="Sales orders data loading" />;
+	if (isLoading) return <LoadingSubPage message={`${words(resourceName).join(" ")} data loading`} />;
 	if (error) return <div className="text-red-500 p-4">Error loading data: {error.message}</div>;
 
 	return (

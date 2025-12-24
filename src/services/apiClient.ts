@@ -9,18 +9,17 @@ import type { ApiResponse } from "../types/apiResponse";
 
 // export const   BASE_URL = "https://jsonplaceholder.typicode.com/";
 // export const   BASE_URL = "http://154.26.136.133:10025/";
-export const   BASE_URL = "http://154.26.136.133:3001/api/";
+export const BASE_URL = "http://106.75.152.117:3001/api/";
 
 async function apiClient
-(
-    inputIntercepted: RequestInfo | URL, 
-    initIntercepted?: RequestInit
-) : Promise<ApiResponse>
-{
-    const {input, init} = modifyRequest(inputIntercepted, initIntercepted);
-    
+    (
+        inputIntercepted: RequestInfo | URL,
+        initIntercepted?: RequestInit
+    ): Promise<ApiResponse> {
+    const { input, init } = modifyRequest(inputIntercepted, initIntercepted);
+
     const response: Response = await fetch(input, init);
-    
+
     const apiResponse = modifyResponse(response);
     return apiResponse;
 }
@@ -28,21 +27,22 @@ async function apiClient
 
 
 function modifyRequest
-(
-    inputIntercepted: RequestInfo | URL, 
-    initIntercepted?: RequestInit
-) 
-{
+    (
+        inputIntercepted: RequestInfo | URL,
+        initIntercepted?: RequestInit
+    ) {
     const input = `${BASE_URL}${inputIntercepted}`;
-    const init = {...initIntercepted, headers:{
-        ...initIntercepted?.headers,
-        "Content-Type": "application/json"
-    }};
-    
-    return {input, init};
+    const init = {
+        ...initIntercepted, headers: {
+            ...initIntercepted?.headers,
+            "Content-Type": "application/json"
+        }
+    };
+
+    return { input, init };
 }
 
-async function modifyResponse(response: Response){
+async function modifyResponse(response: Response) {
     const apiResponse: ApiResponse = {
         ok: response.ok,
         status: response.status,
@@ -52,26 +52,26 @@ async function modifyResponse(response: Response){
         parsedBody: null,
         errorMessage: null,
     };
-    
+
     if (response.ok /* && response.bodyUsed */) {
         apiResponse.parsedBody = await response.json();
         // console.log("Response body:", apiResponse.parsedBody);
-        
+
     } else if (!response.ok) {
         //errors:
-            // unauthenticated (forbidden)
-            // 401: unautherized
-            // 404: notfound
-            // server error
-                // database inaccissable
-                // validation error (e.g. if response data don not match schema for resource)
-            
-            // console.log(await (await resource_data).json());
+        // unauthenticated (forbidden)
+        // 401: unautherized
+        // 404: notfound
+        // server error
+        // database inaccissable
+        // validation error (e.g. if response data don not match schema for resource)
+
+        // console.log(await (await resource_data).json());
         let errorMessage = null;
-        if(response.status === 404) errorMessage = "Resource Not found! Sorry!"; 
-        if(response.status === 500) errorMessage = "Bad Request! Try different one!"; 
-        apiResponse.errorMessage = errorMessage|| response.statusText; //! maybe put real custom err msgs        
-    }    
+        if (response.status === 404) errorMessage = "Resource Not found! Sorry!";
+        if (response.status === 500) errorMessage = "Bad Request! Try different one!";
+        apiResponse.errorMessage = errorMessage || response.statusText; //! maybe put real custom err msgs        
+    }
 
     return apiResponse
 }

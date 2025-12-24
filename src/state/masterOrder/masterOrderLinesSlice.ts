@@ -21,7 +21,7 @@ const masterOrderLinesSlice = createSlice({
     initialState: {
         value: initialState,
         type: ["binary", "string", "string", "number", "number", "number", "number", "number",],
-        name: ["image_1920", "product_name", "name", "quantity", "price_cost", "price_sale", "vendor_id", "price_subtotal"],
+        name: ["image_1920", "product_name", "name", "quantity", "price_cost", "price_sale", "vendor_id", "price_subtotal_sale"],
         string: ["Image", "Product Name", "Description", "Qty", "Unit Price", "Sale Price", "Vendor", "Subtotal",],
         columnVisibility: baseColumnNames.reduce((acc, _, index) => ({ ...acc, [index]: true }), {} as Record<number, boolean>),
     },
@@ -43,7 +43,7 @@ const masterOrderLinesSlice = createSlice({
                         continue;
                     }
                     const fieldType = state.type[colIndex];
-                    if (fieldType === 'many2one') state.value[i][colIndex] = line[fieldName]?.[1];
+                    if (fieldType === 'many2one') state.value[i][colIndex] = line[fieldName]?.[0];
                     else if (fieldType === 'binary') state.value[i][colIndex] = line[fieldName] && 'data:image/png;base64,' + line[fieldName];
                     else state.value[i][colIndex] = line[fieldName];
                 }
@@ -89,7 +89,13 @@ const masterOrderLinesSlice = createSlice({
             for (let i = 1; i < state.value.length; i++) {
                 state.value[i].push('');
             }
-            // Make new columns visible by default (index is already correct, no offset needed)
+            // Ensure name, type, and string arrays are in sync with value[0]
+            const timestamp = Date.now();
+            state.name.push(`x_custom_${timestamp}`);
+            state.string.push(action.payload);
+            state.type.push('string');
+
+            // Make new columns visible by default
             state.columnVisibility[newColumnIndex] = true;
         },
         removeColumn: (state, action) => {
@@ -103,6 +109,7 @@ const masterOrderLinesSlice = createSlice({
             if (removeIndex >= numberOfBaseColumns) {
                 state.name.splice(removeIndex, 1);
                 state.string.splice(removeIndex, 1);
+                state.type.splice(removeIndex, 1);
             }
             // Remove column visibility entry and shift remaining entries
             const newVisibility: Record<number, boolean> = {};

@@ -267,7 +267,15 @@ export default function MasterOrderForm({ masterOrder, lines }: Props) {
 
                             {/* <MasterOrderLineTableCustom name="line_ids" data={lines} vendors={contacts} products={products} setPurchaseCost={setPurchaseCost}/> */}
                             {/* <MasterOrderLineTable name="line_ids" data={lines} /> */}
-                            <MasterOrderLineTableContr isEditMode={!!masterOrder} />
+                            <MasterOrderLineTableContr
+                                isEditMode={!!masterOrder}
+                                summaryData={{
+                                    shippingCost: Number(shippingCost) || 0,
+                                    shippingCharge: Number(shippingCharge) || 0,
+                                    commissionRate: Number(commissionRate) || 0,
+                                    totalExpenses: totalExpenses || 0
+                                }}
+                            />
 
                             {/* <div style={{overflow: "scroll"}}>
                                 <ExcelLikeTable />

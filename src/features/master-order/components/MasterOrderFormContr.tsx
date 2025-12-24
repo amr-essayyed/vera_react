@@ -40,10 +40,11 @@ export default function MasterOrderFormC({ masterOrder, lines }: Props) {
     // const {data: products, isLoading: isProductsLoading} = useAllResource("product");
     const masterOrderForm = useSelector((state: RootState) => state.masterOrder.value)
     const masterOrderLines = useSelector((state: RootState) => state.masterOrderLines.value);
+    const columnNames = useSelector((state: RootState) => state.masterOrderLines.name);
 
     // Computes
     const shippingMargin = Number(masterOrderForm.shipping_charge) - Number(masterOrderForm.shipping_cost);
-    const purchaseCost = masterOrderLines.slice(1).reduce((sum, row) => Number(sum) + ((Number(row[3]) || 0) * (Number(row[5]) || 0)), 0);
+    const purchaseCost = masterOrderLines.slice(1).reduce((sum, row) => Number(sum) + ((Number(row[3]) || 0) * (Number(row[4]) || 0)), 0);
     const amountCost = Number(purchaseCost) + Number(masterOrderForm.shipping_cost);
     // const amountCommission = Number(purchaseCost) + (Number(purchaseCost) * (1+(Number(masterOrderForm.commission_rate)/100)));
     const amountCommission = Number(purchaseCost) * ((Number(masterOrderForm.commission_rate) / 100));
@@ -83,15 +84,22 @@ export default function MasterOrderFormC({ masterOrder, lines }: Props) {
         setIsSubmitting(true);
 
         // //* prepare
-        const masterOrderLineForm: tf_MasterOrderLine[] = masterOrderLines.slice(1).map((mol) => ({
-            image: mol[0],
-            product_name: mol[1],
-            name: mol[2],
-            quantity: Number(mol[3]),
-            price_cost: Number(mol[4]),
-            price_sale: Number(mol[5]),
-            vendor_id: Number(mol[6]),
-        }))
+        // //* prepare
+        const masterOrderLineForm: any[] = masterOrderLines.slice(1).map((mol) => {
+            const lineObj: any = {};
+            columnNames.forEach((colName, index) => {
+                lineObj[colName] = mol[index];
+            });
+
+            // Ensure types and mapping for base fields
+            lineObj.image = lineObj.image_1920;
+            lineObj.quantity = Number(lineObj.quantity);
+            lineObj.price_cost = Number(lineObj.price_cost);
+            lineObj.price_sale = Number(lineObj.price_sale);
+            lineObj.vendor_id = Number(lineObj.vendor_id);
+
+            return lineObj;
+        });
 
         console.log("masterOrder form", masterOrderForm);
         console.log("masterOrderLine form", masterOrderLineForm);
@@ -150,16 +158,50 @@ export default function MasterOrderFormC({ masterOrder, lines }: Props) {
             currency_id: Number(masterOrderForm.currency_id) || 1,
             commission_rate: Number(masterOrderForm.commission_rate),
             auto_sync_documents: masterOrderForm.auto_sync_documents,
-            line_ids: orderLines.map((line) => ({
-                "name": line.name,
-                "image_1920": line.image,
-                "product_id": line.product_id,
-                "price_cost": line.price_cost,
-                "price_sale": line.price_sale || line.price_cost,
-                "quantity": line.quantity,
-                "vendor_id": line.vendor_id,
-                "currency_id": Number(masterOrderForm.currency_id) || 1
-            })),
+            line_ids: orderLines.map((line) => {
+                const linePayload = {
+                    ...line,
+                    "name": line.name,
+                    "image_1920": line.image,
+                    "product_id": line.product_id,
+                    "price_cost": line.price_cost,
+                    "price_sale": line.price_sale || line.price_cost,
+                    "quantity": line.quantity,
+                    "vendor_id": line.vendor_id,
+                    "currency_id": Number(masterOrderForm.currency_id) || 1
+                };
+                // Ensure image headers are present for binary fields if missing
+                // This addresses the user request "add the header to the string"
+                Object.keys(linePayload).forEach(key => {
+                    if (typeof linePayload[key] === 'string' &&
+                        // It looks like base64 (very rough check, >100 chars and no spaces usually)
+                        // But checking specifically for missing header on something that looks like image data
+                        // The user example was "iVBOR..." which is PNG signature.
+                        (linePayload[key].startsWith('iVBOR') || linePayload[key].startsWith('/9j/')) &&
+                        !linePayload[key].startsWith('data:image/')) {
+                        linePayload[key] = 'data:image/png;base64,' + linePayload[key];
+                    }
+                });
+
+                // Remove UI-only fields that cause server errors
+                delete (linePayload as any).product_name;
+                delete (linePayload as any).image;
+
+                // Strip data URI prefix from image fields - backend expects raw base64
+                if ((linePayload as any).image_1920 && typeof (linePayload as any).image_1920 === 'string' && (linePayload as any).image_1920.includes('base64,')) {
+                    (linePayload as any).image_1920 = (linePayload as any).image_1920.split('base64,')[1];
+                }
+
+                // Also strip prefixes from any custom binary fields (e.g. x_12)
+                Object.keys(linePayload).forEach(key => {
+                    const val = (linePayload as any)[key];
+                    if (typeof val === 'string' && val.includes('base64,')) {
+                        (linePayload as any)[key] = val.split('base64,')[1];
+                    }
+                });
+
+                return linePayload;
+            }),
         }
         console.log("[submitting]: ", newMasterOrder);
 
@@ -357,7 +399,16 @@ export default function MasterOrderFormC({ masterOrder, lines }: Props) {
                             {/* <MasterOrderLineTableCustom name="line_ids" data={lines} vendors={contacts} products={products} setPurchaseCost={setPurchaseCost}/> */}
                             {/* <MasterOrderLineTable name="line_ids" data={lines} /> */}
                             {/* <div style={{overflow: "scroll"}}><ExcelLikeTable /></div><div><ExcelJspeadsheet /></div> */}
-                            <MasterOrderLineTableContr errors={MOLerrors} isEditMode={!!masterOrder} />
+                            <MasterOrderLineTableContr
+                                errors={MOLerrors}
+                                isEditMode={!!masterOrder}
+                                summaryData={{
+                                    shippingCost: Number(masterOrderForm.shipping_cost) || 0,
+                                    shippingCharge: Number(masterOrderForm.shipping_charge) || 0,
+                                    commissionRate: Number(masterOrderForm.commission_rate) || 0,
+                                    totalExpenses: totalExpenses || 0
+                                }}
+                            />
                         </Field>
 
                         <div className="flex flex-row-reverse ">

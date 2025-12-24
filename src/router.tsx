@@ -19,24 +19,26 @@ import BillCreatePage from "./pages/BillCreatePage";
 import MasterOrderEditPage from "./features/master-order/pages/MasterOrderEditPage";
 
 export const router = createBrowserRouter([
-    { path: '/', Component: App, children: [
-        {path: 'dashboard', Component: DashboardPage},
-        {path:'master-orders', Component: MasterOrderPage },
-        {path:'master-orders/:id', Component: MasterOrderEditPage },
-        {path:'master-orders/create', Component: MasterOrderCreatePage },
-        {path:'purchase-orders', Component: PurchaseOrderPage },
-        {path:'purchase-orders/:id', Component: PurchaseOrderEditPage },
-        {path:'purchase-orders/create', Component: PurchaseOrderCreatePage },
-        {path:'products', Component: ProductsPage },
-        {path:'suppliers', Component: SuppliersPage },
-        {path:'suppliers/:id', Component: SupplierDetailPage },
-        {path:'suppliers/create', Component: SupplierCreatePage },
-        { path: 'sales', Component: SalesOrderLinePage },
-        { path: 'sales/:id', Component: SalesOrderLinePageDetails },
-        { path: 'sales/create', Component: SalesOrderCreatePage },
-        { path: 'bills', Component: BillCreatePage},
-        {path:'*', Component: NotFoundPage },
-    ] },
-    {path:'*', Component: NotFoundPage }
+    {
+        path: '/', Component: App, children: [
+            { path: 'dashboard', Component: DashboardPage },
+            { path: 'master-orders', Component: MasterOrderPage },
+            { path: 'master-orders/:id', Component: MasterOrderEditPage },
+            { path: 'master-orders/create', Component: MasterOrderCreatePage },
+            { path: 'purchase-orders', Component: PurchaseOrderPage },
+            { path: 'purchase-orders/:id', Component: PurchaseOrderEditPage },
+            { path: 'purchase-orders/create', Component: PurchaseOrderCreatePage },
+            { path: 'products', Component: ProductsPage },
+            { path: 'suppliers', Component: SuppliersPage },
+            { path: 'suppliers/:id', Component: SupplierDetailPage },
+            { path: 'suppliers/create', Component: SupplierCreatePage },
+            { path: 'sales', Component: SalesOrderLinePage },
+            { path: 'sales/:id', Component: SalesOrderLinePageDetails },
+            { path: 'sales/create', Component: SalesOrderCreatePage },
+            { path: 'bills', Component: BillCreatePage },
+            { path: '*', Component: NotFoundPage },
+        ]
+    },
+    { path: '*', Component: NotFoundPage }
 
 ])

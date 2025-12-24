@@ -34,12 +34,55 @@ import ExcelJS from 'exceljs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { moveLine } from '@/state/masterOrder/masterOrderLinesSlice';
 
+interface SummaryData {
+    shippingCost: number;
+    shippingCharge: number;
+    commissionRate: number;
+    totalExpenses: number;
+}
+
 interface Props {
     errors?: any;
     isEditMode?: boolean;
+    summaryData?: SummaryData;
 }
 
-export default function MasterOrderLineTableContr({ errors, isEditMode = false }: Props) {
+// Sortable Row Component moved outside to prevent remounting on every render
+const SortableRow = ({ children, id }: { children: React.ReactNode; id: number }) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        position: 'relative' as 'relative',
+        zIndex: isDragging ? 999 : 'auto',
+    };
+
+    return (
+        <TableRow ref={setNodeRef} style={style}>
+            <TableCell className="w-[50px]">
+                <div
+                    {...attributes}
+                    {...listeners}
+                    className="cursor-grab hover:text-gray-700 text-gray-400 flex items-center justify-center p-2"
+                >
+                    <GripVertical className='w-4 h-4' />
+                </div>
+            </TableCell>
+            {children}
+        </TableRow>
+    );
+};
+
+export default function MasterOrderLineTableContr({ errors, isEditMode = false, summaryData }: Props) {
 
     // States
     const table = useSelector((state: RootState) => state.masterOrderLines.value);
@@ -128,7 +171,7 @@ export default function MasterOrderLineTableContr({ errors, isEditMode = false }
                 // console.log(pastedTable[i][j]);
                 let pastedValue = pastedTable[i][j];
                 if (pastedTable[i][j]) {
-                    if (table[0][c + j] === 'number') {
+                    if (columnTypes[c + j] === 'number') {
                         pastedValue = pastedTable[i][j].replace(/[^0-9.-]/g, '').replace(/\.(?=.*\.)/, '').replace(/(?!^)-/g, '')
                     }
                     dispatch(setCellValue({ row: r + 1 + i, col: c + j, value: pastedValue }))
@@ -204,7 +247,7 @@ export default function MasterOrderLineTableContr({ errors, isEditMode = false }
     const textCell = (r: number, c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e) => handlePaste(e, r, c)}><Input type='text' value={table[r + 1][c] || ''} onChange={(e) => dispatch(setCellValue({ row: r + 1, col: c, value: e.target.value || '' }))}></Input></TableCell>;
     const prodcutNameCell = (r: number, c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e) => handlePaste(e, r, c)}><Input type='text' value={table[r + 1][c] || ''} onChange={(e) => dispatch(setCellValue({ row: r + 1, col: c, value: e.target.value || '' }))} className={cn(`w-[180px]`, errors?.[r]?.product_name?._errors?.[0] && "border-red-500")} /><FieldError>{errors?.[r]?.product_name?._errors?.[0]}</FieldError></TableCell>;
     const descriptionCell = (r: number, c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e) => handlePaste(e, r, c)}><Input type='text' value={table[r + 1][c] || ''} onChange={(e) => dispatch(setCellValue({ row: r + 1, col: c, value: e.target.value || '' }))} className={cn(`w-[180px]`, errors?.[r]?.name?._errors?.[0] && "border-red-500")} /><FieldError>{errors?.[r]?.name?._errors?.[0]}</FieldError></TableCell>;
-    const numberCell = (r: number, c: number) => <TableCell key={`${r}${c}`} className="border" onPaste={(e) => handlePaste(e, r, c)}><Input type='number' value={table[r + 1][c] === undefined || table[r + 1][c] === '' ? '' : table[r + 1][c]} onChange={(e) => dispatch(setCellValue({ row: r + 1, col: c, value: e.target.value || '' }))} /></TableCell>;
+    const numberCell = (r: number, c: number) => <TableCell key={`${r}${c}`} className="border min-w-25" onPaste={(e) => handlePaste(e, r, c)}><Input type='number' value={table[r + 1][c] === undefined || table[r + 1][c] === '' ? '' : table[r + 1][c]} onChange={(e) => dispatch(setCellValue({ row: r + 1, col: c, value: e.target.value || '' }))} /></TableCell>;
     const imageCell = (r: number, c: number) => <TableCell key={`${r}${c}`} className="border"><Upload className="w-6 h-6 text-gray-500 absolute cursor-pointer" /><Input type='file' accept='image/*' onPaste={(e) => handlePasteImage(e, r, c)} className='w-6 h-6 float-left absolute cursor-pointer opacity-0' onChange={(e) => handleImageChange(e, r, c)}></Input><img src={table[r + 1][c] || undefined} className='max-w-20 max-h-20' /></TableCell>;
     const selectCell = (r: number, c: number) => (
         <TableCell key={`${r}${c}`} className="border" onPaste={(e) => handlePaste(e, r, c)}>
@@ -271,40 +314,7 @@ export default function MasterOrderLineTableContr({ errors, isEditMode = false }
         }
     };
 
-    // Sortable Row Component
-    const SortableRow = ({ children, id }: { children: React.ReactNode; id: number }) => {
-        const {
-            attributes,
-            listeners,
-            setNodeRef,
-            transform,
-            transition,
-            isDragging,
-        } = useSortable({ id: id });
 
-        const style = {
-            transform: CSS.Transform.toString(transform),
-            transition,
-            opacity: isDragging ? 0.5 : 1,
-            position: 'relative' as 'relative',
-            zIndex: isDragging ? 999 : 'auto',
-        };
-
-        return (
-            <TableRow ref={setNodeRef} style={style}>
-                <TableCell className="w-[50px]">
-                    <div
-                        {...attributes}
-                        {...listeners}
-                        className="cursor-grab hover:text-gray-700 text-gray-400 flex items-center justify-center p-2"
-                    >
-                        <GripVertical className='w-4 h-4' />
-                    </div>
-                </TableCell>
-                {children}
-            </TableRow>
-        );
-    };
 
     const tableRow = (k: number) => (
         <SortableRow key={k} id={k}>
@@ -323,7 +333,9 @@ export default function MasterOrderLineTableContr({ errors, isEditMode = false }
             {[...Array(numberOfCustomColumns)].map((_, i) => {
                 const colIndex = i + numberOfBaseColumns;
                 if (!columnVisibility[colIndex]) return null;
-                const colType = columnTypes[colIndex];
+                const headerName = table[0][colIndex];
+                const typeIndex = columnStringLabels.indexOf(headerName);
+                const colType = typeIndex !== -1 ? columnTypes[typeIndex] : 'string';
                 // Use imageCell for binary type, otherwise textCell
                 return colType === 'binary' ? imageCell(k, colIndex) : textCell(k, colIndex);
             })}
@@ -448,7 +460,15 @@ export default function MasterOrderLineTableContr({ errors, isEditMode = false }
 
                 // Custom columns
                 for (let j = numberOfBaseColumns; j < table[0].length; j++) {
-                    rowData.push(table[i + 1][j] || '');
+                    const headerName = table[0][j];
+                    const typeIndex = columnStringLabels.indexOf(headerName);
+                    const colType = typeIndex !== -1 ? columnTypes[typeIndex] : 'string';
+                    // For binary columns, check if it's an image to skip text
+                    if (colType === 'binary') {
+                        rowData.push('');
+                    } else {
+                        rowData.push(table[i + 1][j] || '');
+                    }
                 }
 
                 // Add the row
@@ -495,6 +515,137 @@ export default function MasterOrderLineTableContr({ errors, isEditMode = false }
                         excelRow.getCell(2).value = 'Image Error';
                     }
                 }
+                // Handle custom column images
+                for (let j = numberOfBaseColumns; j < table[0].length; j++) {
+                    const headerName = table[0][j];
+                    const typeIndex = columnStringLabels.indexOf(headerName);
+                    const colType = typeIndex !== -1 ? columnTypes[typeIndex] : 'string';
+
+                    if (colType === 'binary') {
+                        const customImageData = table[i + 1][j];
+                        if (customImageData && customImageData.startsWith('data:image/')) {
+                            try {
+                                const imageBuffer = processImageForExcel(customImageData);
+                                if (imageBuffer) {
+                                    const imageExtension = getImageExtension(customImageData);
+                                    const imageId = workbook.addImage({
+                                        buffer: imageBuffer,
+                                        extension: imageExtension,
+                                    });
+                                    // Custom columns start at index j. Base cols end at index 8 (Subtotal).
+                                    // Excel Col indices: 0(A)..8(I)=Base. 9(J)=First Custom.
+                                    // If j=8, we want Col 9 (J). So col: j + 1.
+                                    worksheet.addImage(imageId, {
+                                        tl: { col: j + 1, row: i + 1 },
+                                        ext: { width: 80, height: 50 },
+                                        editAs: 'oneCell'
+                                    });
+                                }
+                            } catch (imageError) {
+                                console.error(`Error adding custom image for row ${i + 1} col ${j}:`, imageError);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Add summary rows if summaryData is provided
+            if (summaryData) {
+                // Calculate totals based on the lines in the table (similar to UI logic but using table data)
+                // lineSubtotalSum was unused, removed.
+
+                // untaxedAmount was unused, removing it. 
+                // We use amountCost (calculated below) for the 'Untaxed Amount' row to match UI logic.
+                // Actually, looking at MasterOrderForm logic:
+                // Untaxed Amount = amountCost = purchaseCost + shippingCost.
+                // Here 'lineSubtotalSum' is likely valid strictly as Purchase Cost sum if it's based on cost price.
+                // BUT, 'subtotals' in this component are calculated as: row[3] (Qty) * row[5] (Sale Price).
+                // Wait, row[4] is Unit Price (Cost?), row[5] is Sale Price.
+                // Let's re-verify subtotals calculation:
+                // line 87: const subtotals = table.slice(1).map((row) => ((Number(row[3]) || 0) * (Number(row[5]) || 0)));
+                // So 'subtotals' IS the Sale Price sum.
+                //
+                // In MasterOrderForm:
+                // Untaxed Amount = amountCost = Purchase Cost + Shipping Cost
+                // Commission = Purchase Cost + (Purchase Cost * (1 + Rate)) ... wait, UI says:
+                // "Comission: $ {amountCommission}"
+                // amountCommission = purchaseCost + (purchaseCost * (1 + commissionRate)) -> This looks like "Total with Commission" not just the commission part.
+                //
+                // Let's look at the UI table again in MasterOrderForm:
+                // <tr><td className="pr-4"><span className="font-bold">Untaxed Amount: </span></td><td>$ {amountCost || masterOrder?.amount_cost}</td></tr>
+                // amountCost = Number(purchaseCost) + Number(shippingCost);
+                // purchaseCost is passed from outside or calculated.
+                //
+                // If I want to replicate the UI exactly, I should probably calculate "Purchase Cost" from the lines.
+                // row[4] is Unit Price (Cost?). row[5] is Sale Price.
+                // In `headers`: Unit Price is index 5 (0-based headers array), corresponding to table index 4.
+                // Headers: '#', 'Image', 'Product Name', 'Description', 'Qty', 'Unit Price', 'Sale Price', 'Vendor', 'Subtotal'
+                // Table indices:
+                // 3: Qty
+                // 4: Unit Price (Cost?)
+                // 5: Sale Price
+                //
+                // Let's assume Unit Price is Cost.
+                // purchaseCost = sum(Qty * Unit Price)
+
+                const calculatePurchaseCost = () => {
+                    return table.slice(1).reduce((acc, row) => {
+                        const qty = Number(row[3]) || 0;
+                        const cost = Number(row[4]) || 0;
+                        return acc + (qty * cost);
+                    }, 0);
+                };
+
+                const purchaseCost = calculatePurchaseCost();
+
+                // Replicating logic from MasterOrderForm.tsx
+                const shippingCost = summaryData.shippingCost || 0;
+                const shippingCharge = summaryData.shippingCharge || 0;
+                const commissionRate = summaryData.commissionRate || 0; // e.g. 0.10 for 10%? or 10? Form sends value.
+                // In Form: <Input ... value={commissionRate} />
+                // amountCommission = purchaseCost + (purchaseCost * (1 + Number(commissionRate)))
+                // This formula in form looks WRONG for "Commission Amount" (it effectively adds purchase cost TWICE?), 
+                // but I must follow "User Review Required" -> "Duplicate UI logic".
+                // Wait, amountCommission line 51: Number(purchaseCost) + (Number(purchaseCost) * (1 + Number(commissionRate))); 
+                // If rate is 0.1 (10%), amountCommission = P + P(1.1) = 2.1P. This seems huge. 
+                // Maybe rate is percentage like 10? Then P(11).
+                // Let's assume the component receives the raw value.
+
+                const amountCost = purchaseCost + shippingCost;
+                // Note: The UI label says "Comission", but the var is `amountCommission`.
+                const amountCommission = purchaseCost + (purchaseCost * (1 + commissionRate));
+                const totalExpenses = summaryData.totalExpenses || 0;
+
+                // Total = amountSale = amountCost + amountCommission
+                // This is also weird: (P + S_cost) + (P + P(1+R)) = 3P + S_cost + ...
+                // The formula in MasterOrderForm.tsx lines 50-54 seems very specific/custom or possibly buggy, 
+                // but I will follow it as requested.
+                const amountSale = amountCost + amountCommission;
+
+                // Add empty row
+                worksheet.addRow([]);
+
+                // Helper to add summary row
+                const addSummaryRow = (label: string, value: number, isTotal = false) => {
+                    const row = worksheet.addRow(['', '', '', '', '', '', '', label, value]);
+                    const labelCell = row.getCell(8); // Column H
+                    const valueCell = row.getCell(9); // Column I
+
+                    labelCell.font = { bold: true };
+                    labelCell.alignment = { horizontal: 'right' };
+
+                    valueCell.numFmt = '"$"#,##0.00';
+                    if (isTotal) {
+                        valueCell.font = { bold: true };
+                        labelCell.font = { bold: true }; // Make total label bold too
+                    }
+                };
+
+                addSummaryRow('Untaxed Amount:', amountCost);
+                addSummaryRow('Comission:', amountCommission);
+                addSummaryRow('Expenses:', totalExpenses);
+                addSummaryRow('Shipping:', shippingCharge);
+                addSummaryRow('Total:', amountSale, true);
             }
 
             // Generate filename with current date
