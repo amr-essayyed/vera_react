@@ -217,16 +217,17 @@ export default function MasterOrderLineTableContr({ errors }: any) {
         <TableRow key={r}>
             <TableCell>{r + 1}</TableCell>
             {/* {tableState.colNameByIndex.map((colName, i) => (tableCell(r, i, colName, tableState.type[colName])))} */}
-            {imageCell(r, 0, "image_1920")}
+            {/* {imageCell(r, 0, "image_1920")}
             {prodcutNameCell(r, 1, "product_id")}
             {descriptionCell(r, 2, "name")}
             {numberCell(r, 3, "quantity")}
             {numberCell(r, 4, "price_cost")}
             {numberCell(r, 5, "price_sale")}
-            {selectCell(r, 6, "vendor_id")}
+            {selectCell(r, 6, "vendor_id")} */}
             {/* sales subtotal */}
             {/* <TableCell>{subtotals[r]}</TableCell> */}
-            {[...Array(numberOfCustomColumns)].map((_, i) => (textCell(r, i + numberOfBaseColumns, "custom" + i)))}
+            {/* {[...Array(numberOfCustomColumns)].map((_, i) => (textCell(r, i + numberOfBaseColumns, "custom" + i)))} */}
+            {tableState.colNameByIndex.map((colName, i) => (tableCell(r, i, colName, tableState.type[colName])))}
             <TableCell className="border"><Button type="button" variant="destructive" onClick={() => dispatch(removeLine(r + 1))}><Trash /></Button></TableCell>
         </TableRow>
     )
@@ -441,19 +442,21 @@ export default function MasterOrderLineTableContr({ errors }: any) {
                 <TableHeader>
                     <TableRow className="bg-gray-100">
                         <TableHead className="border">#</TableHead>
-                        <TableHead className="border">Image</TableHead>
+                        {/* <TableHead className="border">Image</TableHead>
                         <TableHead className="border">Product Name</TableHead>
                         <TableHead className="border">Description</TableHead>
                         <TableHead className="border">Qty</TableHead>
                         <TableHead className="border">Unit Price</TableHead>
                         <TableHead className="border">Sale Price</TableHead>
                         <TableHead className="border">Vendor</TableHead>
-                        <TableHead className="border">Subtotal</TableHead>
-                        {tableState.colNameByIndex.slice(numberOfBaseColumns).map((columnName: string, i: number) => (
-                            <TableHead key={`columnName${i}`} className="border">
+                        <TableHead className="border">Subtotal</TableHead> */}
+                        {/* {tableState.colNameByIndex.slice(numberOfBaseColumns).map((columnName: string, i: number) => ( */}
+                        {tableState.colNameByIndex.map((columnName: string, i: number) => (
+                            <TableHead key={tableState.colNameByIndex[i]} className="border">
                                 <div className='flex justify-between items-center'>
-                                    <Input value={columnName} onChange={(e) => dispatch(setCellValue({ row: 0, col: numberOfBaseColumns + i, value: e.target.value }))} className='flex-' />
-                                    <Button type='button' variant="ghost" onClick={() => dispatch(removeColumn(numberOfBaseColumns + i))} className='cursor-pointer hover:text-red-500'>x</Button>
+                                    {tableState.string[columnName]}
+                                    {/* <Input value={tableState.string[columnName]} onChange={(e) => dispatch(setCellValue({ row: 0, col: numberOfBaseColumns + i, value: e.target.value }))} className='w-30' /> */}
+                                    {/* <Button type='button' variant="ghost" onClick={() => dispatch(removeColumn(numberOfBaseColumns + i))} className='cursor-pointer hover:text-red-500'>x</Button> */}
                                 </div>
                             </TableHead>))
                         }

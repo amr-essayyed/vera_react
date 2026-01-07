@@ -80,15 +80,17 @@ export default function MasterOrderFormC({ masterOrder, lines }: Props) {
         setIsSubmitting(true);
 
         // //* prepare
-        const masterOrderLineForm: tf_MasterOrderLine[] = masterOrderLines.slice(1).map((mol) => ({
-            image: mol[0],
-            product_name: mol[1],
-            name: mol[2],
-            quantity: Number(mol[3]),
-            price_cost: Number(mol[4]),
-            price_sale: Number(mol[5]),
-            vendor_id: Number(mol[6]),
-        }))
+        const masterOrderLineForm = masterOrderLines;
+        // const masterOrderLineForm: tf_MasterOrderLine[] = masterOrderLines
+        // .slice(1).map((mol) => ({
+        //     image: mol[0],
+        //     product_name: mol[1],
+        //     name: mol[2],
+        //     quantity: Number(mol[3]),
+        //     price_cost: Number(mol[4]),
+        //     price_sale: Number(mol[5]),
+        //     vendor_id: Number(mol[6]),
+        // }))
 
         console.log("masterOrder form", masterOrderForm);
         console.log("masterOrderLine form", masterOrderLineForm);
@@ -394,7 +396,7 @@ export default function MasterOrderFormC({ masterOrder, lines }: Props) {
                         <Field orientation="horizontal">
                             <Button
                                 type="submit"
-                                disabled={isSubmitting /* || isLoading */}
+                                disabled={isSubmitting || masterOrder !== undefined /* || isLoading */}
                             >
                                 {isSubmitting ? (
                                     <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>Creating...</>

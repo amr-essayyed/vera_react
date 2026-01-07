@@ -38,6 +38,9 @@ const masterOrderLinesSlice = createSlice({
             for (let field of Object.keys(fields)) {
                 state.type[field] = fields[field].type;
                 state.string[field] = fields[field].string;
+                if (state.colNameByIndex.indexOf(field) === -1) {
+                    state.colNameByIndex.push(field);
+                }
             }
 
             let i = 0;
@@ -62,6 +65,9 @@ const masterOrderLinesSlice = createSlice({
             for (let field of Object.keys(fields)) {
                 state.type[field] = fields[field].type;
                 state.string[field] = fields[field].string;
+                if (state.colNameByIndex.indexOf(field) === -1) {
+                    state.colNameByIndex.push(field);
+                }
             }
 
             let i = 0;
