@@ -10,7 +10,7 @@ import apiClient from "./apiClient.ts";
 import type { WithStringKeys } from "@/types/withStringKeyes.ts";
 import type { IdRef } from "@/types/odooSchemas.ts";
 
-var databaseName = "newmsdb"
+var databaseName = "mastertest"
 
 class JsonRpcResourceService {
     // C
@@ -204,7 +204,7 @@ class JsonRpcResourceService {
         }
     }
 
-    static async getFields(resourceName: Model, condition?: any) {
+    static async getFields(resourceName: Model) {
         const serverResource = resourceNameResolver[resourceName];
         console.log("server resource: ", serverResource);
 
@@ -490,6 +490,7 @@ class JsonRpcResourceService {
             return response.parsedBody.result;
         }
     }
+
     static async updateByIdWithChild(resourceName: Model, childField: string, resourceInstance: Record<string, WithStringKeys>) {
         const serverResource = resourceNameResolver[resourceName];
         const body = {

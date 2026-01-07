@@ -42,7 +42,7 @@ function useResourceByProp<T>(resourceName: Model, propName: string, propValue: 
 function useManyResourceByName<T>(resourceName: Model, names: string[]) {
 	const queryClient = useQueryClient();
 	return useQuery({
-		queryKey: [resourceName, "name",  names],
+		queryKey: [resourceName, "name", names],
 		queryFn: async () => await ResourceService.getManyByName(resourceName, names),
 		initialData: () => {
 			const data = queryClient.getQueryData<any[]>([resourceName]);
@@ -51,7 +51,7 @@ function useManyResourceByName<T>(resourceName: Model, names: string[]) {
 	});
 }
 
-function useManyResourceByProp<T>(resourceName: Model, propName:string , values: unknown[], dependency: any) {
+function useManyResourceByProp<T>(resourceName: Model, propName: string, values: unknown[], dependency: any) {
 	const queryClient = useQueryClient();
 	return useQuery({
 		queryKey: [resourceName, propName, values],
@@ -60,7 +60,7 @@ function useManyResourceByProp<T>(resourceName: Model, propName:string , values:
 			const data = queryClient.getQueryData<any[]>([resourceName]);
 			return data?.filter((d) => d[propName] in values);
 		},
-		enabled: dependency? true: false
+		enabled: dependency ? true : false
 	});
 }
 
@@ -178,6 +178,13 @@ function useDeleteResource(resourceName: Model) {
 	});
 }
 
+function useResourceFields(resourceName: Model) {
+	return useQuery({
+		queryKey: ["fields", resourceName],
+		queryFn: async () => await ResourceService.getFields(resourceName),
+	});
+}
+
 export {
 	useAllResource,
 	useResourceById,
@@ -185,11 +192,12 @@ export {
 	useManyResourceByName,
 	useManyResourceByProp,
 	useCreateResource,
-    useCreateResourceWithChild,
+	useCreateResourceWithChild,
 	//   useCreateDependantResource,
 	useCreateMultipleResources,
 	//   useCreateMultipleFollowedResources,
 	useUpdateResource,
-    useUpdateManyResource,
+	useUpdateManyResource,
 	useDeleteResource,
+	useResourceFields
 };
