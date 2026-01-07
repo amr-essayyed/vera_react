@@ -10,7 +10,7 @@ import apiClient from "./apiClient.ts";
 import type { WithStringKeys } from "@/types/withStringKeyes.ts";
 import type { IdRef } from "@/types/odooSchemas.ts";
 
-var databaseName = "newmsdb"
+var databaseName = "mastertest"
 
 class JsonRpcResourceService {
     // C
